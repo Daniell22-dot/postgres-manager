@@ -1,0 +1,26 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  // Connections
+  getConnections: () => ipcRenderer.invoke('db:getConnections'),
+  saveConnection: (connection) => ipcRenderer.invoke('db:saveConnection', connection),
+  deleteConnection: (id) => ipcRenderer.invoke('db:deleteConnection', id),
+  testConnection: (config) => ipcRenderer.invoke('db:testConnection', config),
+  
+  // Metadata (lazy loading)
+  getDatabases: (connectionId) => ipcRenderer.invoke('db:getDatabases', connectionId),
+  getSchemas: (connectionId, database) => ipcRenderer.invoke('db:getSchemas', connectionId, database),
+  getTables: (connectionId, database, schema) => ipcRenderer.invoke('db:getTables', connectionId, database, schema),
+  getColumns: (connectionId, database, schema, table) => ipcRenderer.invoke('db:getColumns', connectionId, database, schema, table),
+  
+  // Queries
+  executeQuery: (connectionId, database, sql, params) => 
+    ipcRenderer.invoke('db:executeQuery', connectionId, database, sql, params),
+  cancelQuery: (queryId) => ipcRenderer.invoke('db:cancelQuery', queryId),
+  
+  // History
+  getQueryHistory: (connectionId, limit) => ipcRenderer.invoke('db:getQueryHistory', connectionId, limit),
+  
+  // Utilities
+  exportToCSV: (data, filename) => ipcRenderer.invoke('db:exportToCSV', data, filename),
+});

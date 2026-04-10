@@ -1,0 +1,38 @@
+# node modules files and folders
+node_modules/
+# log files
+logs/
+*.log
+# environment variables file
+.env
+# build output
+dist/
+build/
+# coverage reports
+coverage/
+# IDE specific files
+.vscode/
+.idea/
+# OS generated files
+.DS_Store
+Thumbs.db
+# npm debug files
+npm-debug.log*
+# yarn debug files
+yarn-debug.log*
+yarn-error.log*
+# lock files
+package-lock.json
+yarn.lock
+# test output
+test-output/
+# temporary files
+tmp/
+# generated files
+*.generated.js
+# coverage reports
+coverage/
+# misc
+*.swp
+*.swo
+.sixth
