@@ -1,24 +1,14 @@
 const { manager } = require('./connection-manager');
-const Database = require('better-sqlite3');
-const path = require('path');
-const { app } = require('electron');
+const Store = require('electron-store');
 
-let historyDb;
-
-function getHistoryDb() {
-  if (!historyDb) {
-    const userDataPath = app.getPath('userData');
-    const dbPath = path.join(userDataPath, 'postgres-manager.db');
-    historyDb = new Database(dbPath);
-  }
-  return historyDb;
-}
+const store = new Store({
+  name: 'postgres-manager-data'
+});
 
 function setupQueryHandlers(ipcMain) {
   // Execute query
   ipcMain.handle('db:executeQuery', async (event, connectionId, database, sql, params = []) => {
     const startTime = Date.now();
-    const queryId = Math.random().toString(36).substring(7);
     
     // Get connection config
     const connection = await getConnectionById(connectionId);
@@ -34,20 +24,13 @@ function setupQueryHandlers(ipcMain) {
       const pool = await manager.getPool(poolKey, dbConfig);
       client = await pool.connect();
       
-      // Set up query timeout (60 seconds)
-      const timeout = setTimeout(() => {
-        manager.cancelQuery(queryId);
-      }, 60000);
-      
       // Execute query
       const result = await client.query(sql, params);
-      
-      clearTimeout(timeout);
       
       const duration = Date.now() - startTime;
       
       // Save to history
-      saveQueryHistory(connectionId, sql, duration, result.rowCount);
+      await saveQueryHistory(connectionId, sql, duration, result.rowCount);
       
       return {
         success: true,
@@ -60,7 +43,7 @@ function setupQueryHandlers(ipcMain) {
       
     } catch (error) {
       const duration = Date.now() - startTime;
-      saveQueryHistory(connectionId, sql, duration, 0, error.message);
+      await saveQueryHistory(connectionId, sql, duration, 0, error.message);
       
       return {
         success: false,
@@ -74,14 +57,13 @@ function setupQueryHandlers(ipcMain) {
   
   // Get query history
   ipcMain.handle('db:getQueryHistory', async (event, connectionId, limit = 100) => {
-    const db = getHistoryDb();
-    const stmt = db.prepare(`
-      SELECT * FROM query_history 
-      WHERE connection_id = ? 
-      ORDER BY executed_at DESC 
-      LIMIT ?
-    `);
-    return stmt.all(connectionId, limit);
+    const history = store.get('queryHistory', []);
+    const filtered = history
+      .filter(h => h.connection_id === connectionId)
+      .sort((a, b) => b.executed_at - a.executed_at)
+      .slice(0, limit);
+    
+    return filtered;
   });
   
   // Export to CSV
@@ -121,51 +103,38 @@ function setupQueryHandlers(ipcMain) {
   });
 }
 
-function saveQueryHistory(connectionId, sql, duration, rowCount, error = null) {
-  const db = getHistoryDb();
-  const stmt = db.prepare(`
-    INSERT INTO query_history (connection_id, sql_text, executed_at, duration_ms, row_count, error)
-    VALUES (?, ?, ?, ?, ?, ?) 
-  `);// Save query execution details to history.
+async function saveQueryHistory(connectionId, sql, duration, rowCount, error = null) {
+  const history = store.get('queryHistory', []);
   
-  stmt.run(connectionId, sql, Date.now(), duration, rowCount, error);
+  history.unshift({
+    id: Date.now(),
+    connection_id: connectionId,
+    sql_text: sql,
+    executed_at: Date.now(),
+    duration_ms: duration,
+    row_count: rowCount,
+    error: error
+  });
   
-  // Keep only last 1000 records per connection
-  db.prepare(`
-    DELETE FROM query_history 
-    WHERE id NOT IN (
-      SELECT id FROM query_history 
-      WHERE connection_id = ? 
-      ORDER BY executed_at DESC 
-      LIMIT 1000
-    )
-  `).run(connectionId);
+  // Keep only last 1000 records
+  const trimmed = history.slice(0, 1000);
+  store.set('queryHistory', trimmed);
 }
 
 async function getConnectionById(id) {
-  const Database = require('better-sqlite3');
-  const path = require('path');
-  const { app } = require('electron');
-  const crypto = require('crypto');
-  
-  const userDataPath = app.getPath('userData');
-  const dbPath = path.join(userDataPath, 'postgres-manager.db');
-  const db = new Database(dbPath);
-  
-  const stmt = db.prepare('SELECT * FROM connections WHERE id = ?');
-  const connection = stmt.get(id);
+  const connections = store.get('connections', []);
+  const connection = connections.find(c => c.id === id);
   
   if (connection && connection.encrypted_password) {
+    const crypto = require('crypto');
     const [ivHex, encryptedText] = connection.encrypted_password.split(':');
     const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from('01234567890123456789012345678901'), iv); // Use a fixed key for decryption (should match encryption key)
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from('01234567890123456789012345678901'), iv);
     let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     connection.password = decrypted;
   }
-// Decrypt password and add to connection object
-
-  db.close();
+  
   return connection;
 }
 
