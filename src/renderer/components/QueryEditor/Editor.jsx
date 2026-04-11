@@ -8,7 +8,7 @@ import {
   History, 
   Download, 
   Settings,
-  FormatPaint,
+  Paintbrush,
   Trash2,
   Copy,
   Terminal
@@ -200,7 +200,7 @@ const Editor = ({ connection, database }) => {
           </button>
           
           <button className="toolbar-btn" onClick={handleFormatQuery}>
-            <FormatPaint size={16} />
+            <Paintbrush size={16} />
             <span>Format</span>
           </button>
           
@@ -300,99 +300,7 @@ const Editor = ({ connection, database }) => {
         />
       )}
       
-      <style jsx>{`
-        .query-editor {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          background: #1e1e2e;
-        }
-        
-        .editor-toolbar {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 8px 12px;
-          background: #181825;
-          border-bottom: 1px solid #313244;
-          gap: 8px;
-        }
-        
-        .toolbar-left, .toolbar-right {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .toolbar-btn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 12px;
-          background: #313244;
-          border: none;
-          border-radius: 6px;
-          color: #cdd6f4;
-          cursor: pointer;
-          font-size: 13px;
-          transition: all 0.2s;
-        }
-        
-        .toolbar-btn:hover:not(:disabled) {
-          background: #45475a;
-          transform: translateY(-1px);
-        }
-        
-        .toolbar-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        
-        .toolbar-btn.executing {
-          background: #f38ba8;
-          color: #1e1e2e;
-        }
-        
-        .toolbar-divider {
-          width: 1px;
-          height: 24px;
-          background: #313244;
-        }
-        
-        .connection-info {
-          display: flex;
-          gap: 8px;
-          padding: 4px 12px;
-          background: #313244;
-          border-radius: 6px;
-          font-size: 12px;
-        }
-        
-        .connection-name {
-          color: #89b4fa;
-          font-weight: 600;
-        }
-        
-        .database-name {
-          color: #a6e3a1;
-        }
-        
-        .editor-container {
-          flex: 1;
-          min-height: 200px;
-          position: relative;
-        }
-        
-        .editor-status {
-          display: flex;
-          justify-content: space-between;
-          padding: 4px 12px;
-          background: #181825;
-          border-top: 1px solid #313244;
-          font-size: 11px;
-          color: #6c7086;
-        }
-      `}</style>
+
     </div>
   );
 };

@@ -21,34 +21,7 @@ const LoadingSpinner = ({ size = 'medium', text = 'Loading...' }) => {
       />
       {text && <p className="spinner-text">{text}</p>}
       
-      <style jsx>{`
-        .spinner-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
-        }
-        
-        .spinner {
-          border: 3px solid #313244;
-          border-top-color: #89b4fa;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-        
-        .spinner-text {
-          color: #6c7086;
-          font-size: 14px;
-          margin: 0;
-        }
-        
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
+
     </div>
   );
 };
