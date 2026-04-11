@@ -27,12 +27,18 @@ function encrypt(text) {
 
 function decrypt(text) {
   if (!text) return '';
-  const [ivHex, encryptedText] = text.split(':');
-  const iv = Buffer.from(ivHex, 'hex');
-  const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
-  let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
+  try {
+    const [ivHex, encryptedText] = text.split(':');
+    if (!ivHex || !encryptedText) return '';
+    const iv = Buffer.from(ivHex, 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (err) {
+    // Password was encrypted with a different key (e.g. old random key) — return empty
+    return '';
+  }
 }
 
 async function initDatabase() {
