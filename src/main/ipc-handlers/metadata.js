@@ -67,8 +67,8 @@ function setupMetadataHandlers(ipcMain) {
       const result = await client.query(`
         SELECT 
           table_name as name,
-          obj_description((quote_ident($1) || '.' || quote_ident(table_name))::regclass) as comment,
-          (SELECT reltuples::bigint FROM pg_class WHERE relname = table_name) as estimated_rows
+          0 as estimated_rows,
+          NULL as comment
         FROM information_schema.tables
         WHERE table_schema = $1
         ORDER BY table_name
