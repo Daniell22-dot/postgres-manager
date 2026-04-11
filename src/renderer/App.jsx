@@ -98,51 +98,6 @@ function App() {
         <StatusBar />
       </div>
       
-      <style jsx>{`
-        .welcome-screen {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          height: 100%;
-          padding: 40px;
-          text-align: center;
-        }
-        
-        .welcome-screen h1 {
-          font-size: 32px;
-          margin-bottom: 12px;
-          background: linear-gradient(135deg, #89b4fa, #b4befe);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        
-        .features {
-          display: flex;
-          gap: 32px;
-          margin-top: 48px;
-          flex-wrap: wrap;
-          justify-content: center;
-        }
-        
-        .feature {
-          max-width: 250px;
-          padding: 20px;
-          background: #181825;
-          border-radius: 12px;
-          border: 1px solid #313244;
-        }
-        
-        .feature h3 {
-          margin-bottom: 12px;
-          color: #89b4fa;
-        }
-        
-        .feature p {
-          color: #6c7086;
-          font-size: 14px;
-        }
-      `}</style>
     </ErrorBoundary>
   );
 }

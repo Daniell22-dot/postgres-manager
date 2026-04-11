@@ -30,7 +30,11 @@ export const useConnectionStore = create(
     }),
     {
       name: 'connection-store',
-      getStorage: () => localStorage
+      storage: {
+        getItem: (name) => JSON.parse(localStorage.getItem(name)),
+        setItem: (name, value) => localStorage.setItem(name, JSON.stringify(value)),
+        removeItem: (name) => localStorage.removeItem(name),
+      },
     }
   )
 );

@@ -62,17 +62,17 @@ export const useUIStore = create(
       })),
       
       // Loading States
-      loadingStates: new Map(),
+      loadingStates: {},
       setLoading: (key, isLoading) => set((state) => {
-        const newMap = new Map(state.loadingStates);
+        const newStates = { ...state.loadingStates };
         if (isLoading) {
-          newMap.set(key, true);
+          newStates[key] = true;
         } else {
-          newMap.delete(key);
+          delete newStates[key];
         }
-        return { loadingStates: newMap };
+        return { loadingStates: newStates };
       }),
-      isLoading: (key) => get().loadingStates.has(key),
+      isLoading: (key) => !!get().loadingStates[key],
       
       // Keyboard Shortcuts
       keyboardShortcuts: {
@@ -110,7 +110,11 @@ export const useUIStore = create(
     }),
     {
       name: 'ui-storage',
-      getStorage: () => localStorage,
+      storage: {
+        getItem: (name) => JSON.parse(localStorage.getItem(name)),
+        setItem: (name, value) => localStorage.setItem(name, JSON.stringify(value)),
+        removeItem: (name) => localStorage.removeItem(name),
+      },
       partialize: (state) => ({
         theme: state.theme,
         sidebarWidth: state.sidebarWidth,

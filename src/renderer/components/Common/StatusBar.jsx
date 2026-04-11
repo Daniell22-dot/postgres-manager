@@ -87,41 +87,6 @@ const StatusBar = () => {
         </div>
       </div>
       
-      <style jsx>{`
-        .status-bar {
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 28px;
-          background: #181825;
-          border-top: 1px solid #313244;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0 16px;
-          font-size: 11px;
-          color: #6c7086;
-          z-index: 100;
-        }
-        
-        .status-left, .status-right {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-        }
-        
-        .status-item {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        
-        .database-name {
-          color: #89b4fa;
-          font-weight: 500;
-        }
-      `}</style>
     </div>
   );
 };
