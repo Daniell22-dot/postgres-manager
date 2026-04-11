@@ -123,16 +123,22 @@ async function saveQueryHistory(connectionId, sql, duration, rowCount, error = n
 
 async function getConnectionById(id) {
   const connections = store.get('connections', []);
-  const connection = connections.find(c => c.id === id);
+  const connection = connections.find(c => String(c.id) === String(id));
   
   if (connection && connection.encrypted_password) {
-    const crypto = require('crypto');
-    const [ivHex, encryptedText] = connection.encrypted_password.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from('01234567890123456789012345678901'), iv);
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    connection.password = decrypted;
+    try {
+      const crypto = require('crypto');
+      const ENCRYPTION_KEY = crypto.scryptSync('postgres-manager-secret-v1', 'salt-pg-mgr', 32);
+      const [ivHex, encryptedText] = connection.encrypted_password.split(':');
+      const iv = Buffer.from(ivHex, 'hex');
+      const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
+      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      connection.password = decrypted;
+    } catch (err) {
+      console.error('Failed to decrypt password during query execution', err.message);
+      connection.password = '';
+    }
   }
   
   return connection;
