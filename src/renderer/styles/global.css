@@ -1,0 +1,48 @@
+:root {
+  /* Theme variables - will be overridden by theme store */
+  --primary: #89b4fa;
+  --secondary: #b4befe;
+  --background: #1e1e2e;
+  --surface: #181825;
+  --surface-hover: #313244;
+  --border: #313244;
+  --text: #cdd6f4;
+  --text-secondary: #6c7086;
+  --success: #a6e3a1;
+  --error: #f38ba8;
+  --warning: #f9e2af;
+  --info: #89b4fa;
+  
+  /* Sizes */
+  --font-size: 14px;
+  --sidebar-width: 280px;
+  --animation-speed: 0.2s;
+  --contrast-boost: 1;
+}
+
+* {
+  transition: background-color var(--animation-speed) ease,
+              border-color var(--animation-speed) ease,
+              color var(--animation-speed) ease;
+}
+
+body {
+  font-size: var(--font-size);
+  background: var(--background);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* High contrast support */
+@media (prefers-contrast: high) {
+  :root {
+    --contrast-boost: 1.5;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --animation-speed: 0;
+  }
+}

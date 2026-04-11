@@ -36,3 +36,5 @@ coverage/
 *.swp
 *.swo
 .sixth
+website/
+resources/

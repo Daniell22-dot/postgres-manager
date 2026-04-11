@@ -1,23 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import TreeNode from './TreeNode';
 import ConnectionDialog from './ConnectionDialog';
-import { ChevronRight, Database, FolderOpen, Table, Key, Loader } from 'lucide-react';
-import { useQueryStore } from '../../store/queryStore';
+import CreateDatabaseDialog from './CreateDatabaseDialog';
+import { ChevronRight, ChevronDown, Database, FolderOpen, Table, Key, Plus } from 'lucide-react';
 
-const DatabaseTree = ({ onSelectDatabase }) => {
+const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
   const [connections, setConnections] = useState([]);
   const [expandedNodes, setExpandedNodes] = useState(new Set());
   const [loadingNodes, setLoadingNodes] = useState(new Set());
   const [showConnectionDialog, setShowConnectionDialog] = useState(false);
-  const [nodeData, setNodeData] = useState(new Map()); // Cache for loaded data
+  const [showCreateDatabaseDialog, setShowCreateDatabaseDialog] = useState(false);
+  const [selectedConnectionForDb, setSelectedConnectionForDb] = useState(null);
+  const [nodeData, setNodeData] = useState(new Map());
 
   useEffect(() => {
     loadConnections();
   }, []);
 
   const loadConnections = async () => {
-    const conns = await window.electronAPI.getConnections();
-    setConnections(conns);
+    try {
+      const conns = await window.electronAPI.getConnections();
+      setConnections(conns || []);
+    } catch (error) {
+      console.error('Error loading connections:', error);
+    }
   };
 
   const toggleNode = async (nodeId, nodeType, nodeContext) => {
@@ -41,12 +46,15 @@ const DatabaseTree = ({ onSelectDatabase }) => {
       try {
         switch (nodeType) {
           case 'connection':
+            console.log('Loading databases for connection:', nodeContext);
             data = await window.electronAPI.getDatabases(nodeContext.id);
             break;
           case 'database':
+            console.log('Loading schemas for database:', nodeContext);
             data = await window.electronAPI.getSchemas(nodeContext.connectionId, nodeContext.name);
             break;
           case 'schema':
+            console.log('Loading tables for schema:', nodeContext);
             data = await window.electronAPI.getTables(
               nodeContext.connectionId, 
               nodeContext.database, 
@@ -54,6 +62,7 @@ const DatabaseTree = ({ onSelectDatabase }) => {
             );
             break;
           case 'table':
+            console.log('Loading columns for table:', nodeContext);
             data = await window.electronAPI.getColumns(
               nodeContext.connectionId,
               nodeContext.database,
@@ -78,52 +87,14 @@ const DatabaseTree = ({ onSelectDatabase }) => {
   };
 
   const handleSelectDatabase = (connection, database) => {
-    onSelectDatabase(connection, database);
-  };
-
-  const handleDeleteConnection = async (connectionId) => {
-    if (window.confirm('Delete this connection? This cannot be undone.')) {
-      await window.electronAPI.deleteConnection(connectionId);
-      await loadConnections();
+    if (onSelectDatabase) {
+      onSelectDatabase(connection, database);
     }
   };
 
-  const handleRefresh = (nodeId, nodeType, nodeContext) => {
-    // Clear node cache
-    setNodeData(prev => {
-      const newMap = new Map(prev);
-      newMap.delete(nodeId);
-      return newMap;
-    });
-    
-    // If expanded, collapse and re-expand to force load
-    if (expandedNodes.has(nodeId)) {
-      setExpandedNodes(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(nodeId);
-        return newSet;
-      });
-      setTimeout(() => toggleNode(nodeId, nodeType, nodeContext), 0);
-    }
-  };
-
-  const handleViewData = (nodeContext, limit) => {
-    // First, ensure the correct database is selected
-    const conn = connections.find(c => c.id === nodeContext.connectionId);
-    if (conn) {
-      onSelectDatabase(conn, nodeContext.database);
-    }
-    
-    // Build the query
-    const query = `SELECT * FROM "${nodeContext.schema}"."${nodeContext.name}"${limit ? ` LIMIT ${limit}` : ''};`;
-    
-    // Push into the query store current tab
-    const state = useQueryStore.getState();
-    const currentTab = state.queryTabs.find(tab => tab.id === state.activeTabId);
-    
-    if (currentTab) {
-      // Always update the current tab Content
-      state.updateTabContent(state.activeTabId, query);
+  const handleSelectTable = (connection, database, schema, table) => {
+    if (onSelectTable) {
+      onSelectTable(connection, database, schema, table);
     }
   };
 
@@ -138,12 +109,16 @@ const DatabaseTree = ({ onSelectDatabase }) => {
         context={{ id: connection.id, ...connection }}
         isExpanded={expandedNodes.has(`conn-${connection.id}`)}
         isLoading={loadingNodes.has(`conn-${connection.id}`)}
-        onToggle={() => toggleNode(`conn-${connection.id}`, 'connection', { id: connection.id })}
-        onRefresh={() => handleRefresh(`conn-${connection.id}`, 'connection', { id: connection.id })}
-        onDelete={() => handleDeleteConnection(connection.id)}
-        children={renderChildren(`conn-${connection.id}`, 'database', { connectionId: connection.id })}
+        onToggle={() => toggleNode(`conn-${connection.id}`, 'connection', { id: connection.id, connection: connection })}
         onSelect={() => {}}
-      />
+        connection={connection}
+        onCreateDatabase={() => {
+          setSelectedConnectionForDb(connection);
+          setShowCreateDatabaseDialog(true);
+        }}
+      >
+        {renderChildren(`conn-${connection.id}`, 'database', { connectionId: connection.id, connection: connection })}
+      </TreeNode>
     ));
   };
 
@@ -156,14 +131,18 @@ const DatabaseTree = ({ onSelectDatabase }) => {
     }
     
     return data.map((item, index) => {
-      let nodeId = `${parentId}-${childType}-${item.name || index}`;
+      let nodeId = `${parentId}-${childType}-${item.name || item.table_name || index}`;
       let icon;
       let childContext = { ...context };
       
       switch (childType) {
         case 'database':
           icon = <Database size={14} />;
-          childContext = { ...context, name: item.name, connectionId: context.connectionId };
+          childContext = { 
+            ...context, 
+            name: item.name, 
+            connectionId: context.connectionId 
+          };
           break;
         case 'schema':
           icon = <FolderOpen size={14} />;
@@ -184,23 +163,7 @@ const DatabaseTree = ({ onSelectDatabase }) => {
             estimatedRows: item.estimated_rows,
             comment: item.comment
           };
-          
-          return (
-            <TreeNode
-              key={nodeId}
-              id={nodeId}
-              label={item.name}
-              icon={icon}
-              type={childType}
-              context={childContext}
-              isExpanded={expandedNodes.has(nodeId)}
-              isLoading={loadingNodes.has(nodeId)}
-              onToggle={() => toggleNode(nodeId, childType, childContext)}
-              onRefresh={() => handleRefresh(nodeId, childType, childContext)}
-              onViewData={(limit) => handleViewData(childContext, limit)}
-              children={renderChildren(nodeId, 'column', childContext)}
-            />
-          );
+          break;
         case 'column':
           icon = <Key size={12} />;
           return (
@@ -222,28 +185,30 @@ const DatabaseTree = ({ onSelectDatabase }) => {
         <TreeNode
           key={nodeId}
           id={nodeId}
-          label={item.name}
+          label={item.name || item.table_name}
           icon={icon}
           type={childType}
           context={childContext}
           isExpanded={expandedNodes.has(nodeId)}
           isLoading={loadingNodes.has(nodeId)}
           onToggle={() => toggleNode(nodeId, childType, childContext)}
-          onRefresh={() => handleRefresh(nodeId, childType, childContext)}
-          onSelect={
-            childType === 'database'
-              ? () => handleSelectDatabase(
-                  connections.find(c => c.id === childContext.connectionId),
-                  item.name
-                )
-              : undefined
-          }
-          children={renderChildren(nodeId, 
+          onSelect={() => {
+            if (childType === 'database') {
+              const connection = connections.find(c => c.id === context.connectionId);
+              handleSelectDatabase(connection, item.name);
+            } else if (childType === 'table') {
+              handleSelectTable(context.connection, context.database, context.schema, item.name);
+            }
+          }}
+        >
+          {renderChildren(
+            nodeId, 
             childType === 'database' ? 'schema' : 
-            childType === 'schema' ? 'table' : null, 
+            childType === 'schema' ? 'table' : 
+            childType === 'table' ? 'column' : null,
             childContext
           )}
-        />
+        </TreeNode>
       );
     });
   };
@@ -253,7 +218,6 @@ const DatabaseTree = ({ onSelectDatabase }) => {
       <button 
         className="new-connection-btn"
         onClick={() => setShowConnectionDialog(true)}
-        style={{ marginBottom: '16px' }}
       >
         + New Connection
       </button>
@@ -272,6 +236,111 @@ const DatabaseTree = ({ onSelectDatabase }) => {
           }}
         />
       )}
+      
+      {showCreateDatabaseDialog && selectedConnectionForDb && (
+        <CreateDatabaseDialog
+          connection={selectedConnectionForDb}
+          onClose={() => {
+            setShowCreateDatabaseDialog(false);
+            setSelectedConnectionForDb(null);
+          }}
+          onDatabaseCreated={async (databaseName) => {
+            // Refresh the tree to show new database
+            setNodeData(new Map()); // Clear cache
+            await loadConnections();
+            setShowCreateDatabaseDialog(false);
+            setSelectedConnectionForDb(null);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// TreeNode Component
+const TreeNode = ({ id, label, icon, type, context, isExpanded, isLoading, onToggle, onSelect, children, connection, onCreateDatabase }) => {
+  const hasChildren = children && children.props && children.props.children;
+  
+  return (
+    <div className="tree-node">
+      <div 
+        className="tree-node-content"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (hasChildren && onToggle) {
+            onToggle();
+          }
+          if (onSelect) {
+            onSelect();
+          }
+        }}
+      >
+        <span className="tree-icon">
+          {isLoading ? (
+            <div className="spinner-small"></div>
+          ) : hasChildren ? (
+            isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+          ) : (
+            <span style={{ width: 14 }}></span>
+          )}
+        </span>
+        {icon && <span className="tree-icon">{icon}</span>}
+        <span className="tree-label">{label}</span>
+        {type === 'table' && context.estimatedRows && (
+          <span className="tree-badge">{context.estimatedRows.toLocaleString()} rows</span>
+        )}
+        {type === 'connection' && onCreateDatabase && (
+          <button 
+            className="create-db-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCreateDatabase();
+            }}
+            title="Create new database"
+          >
+            <Plus size={12} />
+          </button>
+        )}
+      </div>
+      
+      {isExpanded && hasChildren && (
+        <div className="tree-children">
+          {children}
+        </div>
+      )}
+      
+      <style jsx>{`
+        .create-db-btn {
+          background: #313244;
+          border: none;
+          border-radius: 4px;
+          padding: 2px 4px;
+          cursor: pointer;
+          color: #89b4fa;
+          display: flex;
+          align-items: center;
+          transition: all 0.2s;
+        }
+        
+        .create-db-btn:hover {
+          background: #89b4fa;
+          color: #1e1e2e;
+          transform: scale(1.05);
+        }
+        
+        .spinner-small {
+          width: 12px;
+          height: 12px;
+          border: 2px solid #313244;
+          border-top-color: #89b4fa;
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

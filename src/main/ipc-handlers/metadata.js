@@ -1,7 +1,7 @@
 const { manager } = require('./connection-manager');
 
 function setupMetadataHandlers(ipcMain) {
-  // Get databases (for PostgreSQL)
+  // Get databases
   ipcMain.handle('db:getDatabases', async (event, connectionId) => {
     const connection = await getConnectionById(connectionId);
     if (!connection) return [];
@@ -10,7 +10,6 @@ function setupMetadataHandlers(ipcMain) {
       const pool = await manager.getPool(connectionId, connection);
       const client = await pool.connect();
       
-      // Get all databases (excluding templates)
       const result = await client.query(`
         SELECT datname as name 
         FROM pg_database 
@@ -26,23 +25,29 @@ function setupMetadataHandlers(ipcMain) {
     }
   });
   
-  // Get schemas for a database
+  // Get schemas - THIS IS KEY FOR SHOWING PUBLIC SCHEMA
   ipcMain.handle('db:getSchemas', async (event, connectionId, database) => {
     const connection = await getConnectionById(connectionId);
     if (!connection) return [];
     
-    // Create a new connection to the specific database
     const dbConfig = { ...connection, database };
+    const poolKey = `${connectionId}-${database}`;
     
     try {
-      const pool = await manager.getPool(`${connectionId}-${database}`, dbConfig);
+      const pool = await manager.getPool(poolKey, dbConfig);
       const client = await pool.connect();
       
+      // Get all non-system schemas (including public)
       const result = await client.query(`
-        SELECT schema_name as name
+        SELECT 
+          schema_name as name,
+          schema_owner as owner
         FROM information_schema.schemata
         WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
-        ORDER BY schema_name
+          AND schema_name NOT LIKE 'pg_%'
+        ORDER BY 
+          CASE WHEN schema_name = 'public' THEN 0 ELSE 1 END,
+          schema_name
       `);
       
       client.release();
@@ -53,24 +58,26 @@ function setupMetadataHandlers(ipcMain) {
     }
   });
   
-  // Get tables in a schema
+  // Get tables in schema
   ipcMain.handle('db:getTables', async (event, connectionId, database, schema) => {
     const connection = await getConnectionById(connectionId);
     if (!connection) return [];
     
     const dbConfig = { ...connection, database };
+    const poolKey = `${connectionId}-${database}`;
     
     try {
-      const pool = await manager.getPool(`${connectionId}-${database}`, dbConfig);
+      const pool = await manager.getPool(poolKey, dbConfig);
       const client = await pool.connect();
       
       const result = await client.query(`
         SELECT 
           table_name as name,
-          0 as estimated_rows,
-          NULL as comment
+          obj_description((quote_ident($1) || '.' || quote_ident(table_name))::regclass) as comment,
+          (SELECT reltuples::bigint FROM pg_class WHERE relname = table_name) as estimated_rows
         FROM information_schema.tables
         WHERE table_schema = $1
+          AND table_type = 'BASE TABLE'
         ORDER BY table_name
       `, [schema]);
       
@@ -82,15 +89,16 @@ function setupMetadataHandlers(ipcMain) {
     }
   });
   
-  // Get columns for a table
+  // Get columns for table
   ipcMain.handle('db:getColumns', async (event, connectionId, database, schema, table) => {
     const connection = await getConnectionById(connectionId);
     if (!connection) return [];
     
     const dbConfig = { ...connection, database };
+    const poolKey = `${connectionId}-${database}`;
     
     try {
-      const pool = await manager.getPool(`${connectionId}-${database}`, dbConfig);
+      const pool = await manager.getPool(poolKey, dbConfig);
       const client = await pool.connect();
       
       const result = await client.query(`
@@ -114,36 +122,22 @@ function setupMetadataHandlers(ipcMain) {
   });
 }
 
-function getConnectionById(id) {
+async function getConnectionById(id) {
   const Store = require('electron-store');
-  const crypto = require('crypto');
-
-  const store = new Store({
-    name: 'postgres-manager-data',
-    defaults: { connections: [] }
-  });
-
+  const store = new Store({ name: 'postgres-manager-data' });
   const connections = store.get('connections', []);
-  // id is stored as a number (Date.now()) but IPC may pass it as string
-  const connection = connections.find(c => String(c.id) === String(id));
-  if (!connection) return null;
-
-  // Decrypt password using the same deterministic key as connections.js
-  if (connection.encrypted_password) {
-    try {
-      const ENCRYPTION_KEY = crypto.scryptSync('postgres-manager-secret-v1', 'salt-pg-mgr', 32);
-      const [ivHex, encryptedText] = connection.encrypted_password.split(':');
-      const iv = Buffer.from(ivHex, 'hex');
-      const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
-      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-      decrypted += decipher.final('utf8');
-      connection.password = decrypted;
-    } catch (err) {
-      console.error('Failed to decrypt password for connection', id, err.message);
-      connection.password = '';
-    }
+  const connection = connections.find(c => c.id === id);
+  
+  if (connection && connection.encrypted_password) {
+    const crypto = require('crypto');
+    const [ivHex, encryptedText] = connection.encrypted_password.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from('01234567890123456789012345678901'), iv);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    connection.password = decrypted;
   }
-
+  
   return connection;
 }
 

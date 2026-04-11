@@ -145,6 +145,53 @@ function setupConnectionHandlers(ipcMain) {
       }
     }
   });
+// Add this to setupConnectionHandlers function
+ipcMain.handle('db:createDatabase', async (event, connectionId, databaseName, owner, encoding) => {
+  const connection = await getConnectionById(connectionId);
+  if (!connection) {
+    return { success: false, error: 'Connection not found' };
+  }
+  
+  const { Pool } = require('pg');
+  let pool;
+  
+  try {
+    // Connect to default 'postgres' database to create new database
+    pool = new Pool({
+      host: connection.host,
+      port: connection.port,
+      database: 'postgres', // Connect to default database
+      user: connection.username,
+      password: connection.password,
+      connectionTimeoutMillis: 10000,
+    });
+    
+    const client = await pool.connect();
+    
+    // Build CREATE DATABASE command
+    let createSql = `CREATE DATABASE "${databaseName}"`;
+    
+    if (owner && owner.trim()) {
+      createSql += ` OWNER = "${owner}"`;
+    }
+    
+    if (encoding) {
+      createSql += ` ENCODING = '${encoding}'`;
+    }
+    
+    console.log('Executing:', createSql);
+    
+    await client.query(createSql);
+    client.release();
+    await pool.end();
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error creating database:', error);
+    return { success: false, error: error.message };
+  } finally {
+    if (pool) await pool.end();
+  }
+});
 }
-
 module.exports = { initDatabase, setupConnectionHandlers };

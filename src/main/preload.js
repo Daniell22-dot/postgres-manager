@@ -7,6 +7,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteConnection: (id) => ipcRenderer.invoke('db:deleteConnection', id),
   testConnection: (config) => ipcRenderer.invoke('db:testConnection', config),
   
+  // Database Creation
+  createDatabase: (connectionId, databaseName, owner, encoding) => 
+    ipcRenderer.invoke('db:createDatabase', connectionId, databaseName, owner, encoding),
+
   // Metadata (lazy loading)
   getDatabases: (connectionId) => ipcRenderer.invoke('db:getDatabases', connectionId),
   getSchemas: (connectionId, database) => ipcRenderer.invoke('db:getSchemas', connectionId, database),

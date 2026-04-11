@@ -7,6 +7,8 @@ export const useConnectionStore = create(
       connections: [],
       activeConnection: null,
       activeDatabase: null,
+      activeSchema: null,
+      activeTable: null,
       
       setConnections: (connections) => set({ connections }),
       
@@ -22,10 +24,19 @@ export const useConnectionStore = create(
         activeConnection: connection,
         activeDatabase: database
       }),
+
+      setActiveTable: (connection, database, schema, table) => set({
+        activeTable: table ? { name: table, schema: schema } : null,
+        activeDatabase: database || get().activeDatabase,
+        activeConnection: connection || get().activeConnection,
+        activeSchema: schema || null
+      }),
       
       clearActiveConnection: () => set({
         activeConnection: null,
-        activeDatabase: null
+        activeDatabase: null,
+        activeSchema: null,
+        activeTable: null
       })
     }),
     {

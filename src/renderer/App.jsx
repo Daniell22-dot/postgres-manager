@@ -8,13 +8,20 @@ import { useConnectionStore } from './store/connectionStore';
 import './styles/app.css';
 
 function App() {
-  const { activeConnection, activeDatabase, setActiveConnection } = useConnectionStore();
+  const { activeConnection, activeDatabase, activeTable, setActiveConnection, setActiveTable} = useConnectionStore();
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
 
   const handleSelectDatabase = (connection, database) => {
     setActiveConnection(connection, database);
+    setActiveTable(null, null, null); // Clear Table selection
   };
+
+  const handleSelectTable = (connection, database, schema, table) => {
+    console.log('Table selected:', connection.name, database, schema, table);
+    setActiveConnection(connection, database, schema, table);
+  };
+
 
   const handleMouseMove = (e) => {
     if (isResizing) {
