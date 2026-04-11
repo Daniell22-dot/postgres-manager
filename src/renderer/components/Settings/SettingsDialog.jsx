@@ -49,64 +49,6 @@ const SettingsDialog = ({ onClose }) => {
           </div>
         </div>
       </div>
-      
-      <style jsx>{`
-        .settings-dialog {
-          background: var(--background);
-          border-radius: 12px;
-          width: 800px;
-          max-width: 90vw;
-          height: 600px;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-        
-        .settings-container {
-          display: flex;
-          flex: 1;
-          overflow: hidden;
-        }
-        
-        .settings-sidebar {
-          width: 200px;
-          background: var(--surface);
-          border-right: 1px solid var(--border);
-          padding: 16px;
-          overflow-y: auto;
-        }
-        
-        .settings-tab {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          width: 100%;
-          padding: 10px 12px;
-          background: transparent;
-          border: none;
-          border-radius: 8px;
-          color: var(--text);
-          cursor: pointer;
-          transition: all 0.2s;
-          margin-bottom: 4px;
-        }
-        
-        .settings-tab:hover {
-          background: var(--surfaceHover);
-        }
-        
-        .settings-tab.active {
-          background: var(--primary);
-          color: var(--background);
-        }
-        
-        .settings-content {
-          flex: 1;
-          overflow-y: auto;
-          padding: 20px;
-        }
-      `}</style>
     </div>
   );
 };

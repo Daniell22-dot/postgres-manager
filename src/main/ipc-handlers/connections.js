@@ -1,6 +1,9 @@
 const Store = require('electron-store');
 const crypto = require('crypto');
 const { manager } = require('./connection-manager');
+const { APIGateway } = require('../services/apiGateway');
+
+const apiGateway = new APIGateway();
 
 // Initialize store
 const store = new Store({
@@ -145,6 +148,28 @@ function setupConnectionHandlers(ipcMain) {
       }
     }
   });
+
+  ipcMain.handle('db:startApi', async (event, connectionId) => {
+    try {
+      const connectionConfig = await getConnectionById(connectionId);
+      if (!connectionConfig) {
+        throw new Error('Connection not found');
+      }
+      return await apiGateway.startForConnection(connectionId, connectionConfig);
+    } catch (e) {
+      throw new Error('Failed to start PostgREST API: ' + e.message);
+    }
+  });
+
+  ipcMain.handle('db:stopApi', async (event, connectionId) => {
+    try {
+      await apiGateway.stop(connectionId);
+      return { success: true };
+    } catch (e) {
+      throw new Error('Failed to stop API: ' + e.message);
+    }
+  });
+
 // Add this to setupConnectionHandlers function
 ipcMain.handle('db:createDatabase', async (event, connectionId, databaseName, owner, encoding) => {
   const connection = await getConnectionById(connectionId);

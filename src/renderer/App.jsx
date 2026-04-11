@@ -4,11 +4,14 @@ import DatabaseTree from './components/Sidebar/DatabaseTree';
 import Editor from './components/QueryEditor/Editor';
 import StatusBar from './components/Common/StatusBar';
 import ErrorBoundary from './components/Common/ErrorBoundary';
+import SettingsDialog from './components/Settings/SettingsDialog';
 import { useConnectionStore } from './store/connectionStore';
+import { useUIStore } from './store/uiStore';
 import './styles/app.css';
 
 function App() {
   const { activeConnection, activeDatabase, activeTable, setActiveConnection, setActiveTable} = useConnectionStore();
+  const { dialogs, closeDialog } = useUIStore();
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -103,6 +106,10 @@ function App() {
         </div>
         
         <StatusBar />
+        
+        {dialogs.settingsDialog && (
+          <SettingsDialog onClose={() => closeDialog('settingsDialog')} />
+        )}
       </div>
       
     </ErrorBoundary>

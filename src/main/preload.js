@@ -11,6 +11,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createDatabase: (connectionId, databaseName, owner, encoding) => 
     ipcRenderer.invoke('db:createDatabase', connectionId, databaseName, owner, encoding),
 
+  // API Gateway
+  startApi: (connectionId) => ipcRenderer.invoke('db:startApi', connectionId),
+  stopApi: (connectionId) => ipcRenderer.invoke('db:stopApi', connectionId),
+
   // Metadata (lazy loading)
   getDatabases: (connectionId) => ipcRenderer.invoke('db:getDatabases', connectionId),
   getSchemas: (connectionId, database) => ipcRenderer.invoke('db:getSchemas', connectionId, database),

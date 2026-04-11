@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ConnectionDialog from './ConnectionDialog';
 import CreateDatabaseDialog from './CreateDatabaseDialog';
+import TreeNode from './TreeNode';
 import { ChevronRight, ChevronDown, Database, FolderOpen, Table, Key, Plus } from 'lucide-react';
+import { useQueryStore } from '../../store/queryStore';
 
 const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
   const [connections, setConnections] = useState([]);
@@ -98,6 +100,44 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
     }
   };
 
+  const handleRefresh = (nodeId, nodeType, nodeContext) => {
+    setNodeData(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(nodeId);
+      return newMap;
+    });
+    if (expandedNodes.has(nodeId)) {
+      setExpandedNodes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(nodeId);
+        return newSet;
+      });
+      setTimeout(() => toggleNode(nodeId, nodeType, nodeContext), 0);
+    }
+  };
+
+  const handleViewData = (nodeContext, limit) => {
+    const conn = connections.find(c => c.id === nodeContext.connectionId);
+    if (conn) {
+      handleSelectDatabase(conn, nodeContext.database);
+    }
+    const query = `SELECT * FROM "${nodeContext.schema}"."${nodeContext.name}"${limit ? ` LIMIT ${limit}` : ''};`;
+    const state = useQueryStore.getState();
+    const currentTab = state.queryTabs.find(tab => tab.id === state.activeTabId);
+    if (currentTab) {
+      state.updateTabContent(state.activeTabId, query);
+    }
+  };
+  
+  const handleStartApi = async (connectionId) => {
+    try {
+      const urls = await window.electronAPI.startApi(connectionId);
+      alert(`REST API Started!\nAPI URL: ${urls.apiUrl}\nDocs: ${urls.docsUrl}`);
+    } catch (e) {
+      alert('Failed to start API: ' + e.message);
+    }
+  };
+
   const renderTree = () => {
     return connections.map(connection => (
       <TreeNode
@@ -110,6 +150,8 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
         isExpanded={expandedNodes.has(`conn-${connection.id}`)}
         isLoading={loadingNodes.has(`conn-${connection.id}`)}
         onToggle={() => toggleNode(`conn-${connection.id}`, 'connection', { id: connection.id, connection: connection })}
+        onRefresh={() => handleRefresh(`conn-${connection.id}`, 'connection', { id: connection.id, connection: connection })}
+        onStartApi={() => handleStartApi(connection.id)}
         onSelect={() => {}}
         connection={connection}
         onCreateDatabase={() => {
@@ -141,7 +183,8 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
           childContext = { 
             ...context, 
             name: item.name, 
-            connectionId: context.connectionId 
+            database: item.name,
+            connectionId: context.id || context.connectionId 
           };
           break;
         case 'schema':
@@ -149,8 +192,9 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
           childContext = { 
             ...context, 
             name: item.name, 
-            database: context.database,
-            connectionId: context.connectionId 
+            schema: item.name,
+            database: context.database || context.name,
+            connectionId: context.connectionId || context.id 
           };
           break;
         case 'table':
@@ -192,6 +236,8 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
           isExpanded={expandedNodes.has(nodeId)}
           isLoading={loadingNodes.has(nodeId)}
           onToggle={() => toggleNode(nodeId, childType, childContext)}
+          onRefresh={() => handleRefresh(nodeId, childType, childContext)}
+          onViewData={(limit) => handleViewData(childContext, limit)}
           onSelect={() => {
             if (childType === 'database') {
               const connection = connections.find(c => c.id === context.connectionId);
@@ -253,94 +299,6 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
           }}
         />
       )}
-    </div>
-  );
-};
-
-// TreeNode Component
-const TreeNode = ({ id, label, icon, type, context, isExpanded, isLoading, onToggle, onSelect, children, connection, onCreateDatabase }) => {
-  const hasChildren = children && children.props && children.props.children;
-  
-  return (
-    <div className="tree-node">
-      <div 
-        className="tree-node-content"
-        onClick={(e) => {
-          e.stopPropagation();
-          if (hasChildren && onToggle) {
-            onToggle();
-          }
-          if (onSelect) {
-            onSelect();
-          }
-        }}
-      >
-        <span className="tree-icon">
-          {isLoading ? (
-            <div className="spinner-small"></div>
-          ) : hasChildren ? (
-            isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-          ) : (
-            <span style={{ width: 14 }}></span>
-          )}
-        </span>
-        {icon && <span className="tree-icon">{icon}</span>}
-        <span className="tree-label">{label}</span>
-        {type === 'table' && context.estimatedRows && (
-          <span className="tree-badge">{context.estimatedRows.toLocaleString()} rows</span>
-        )}
-        {type === 'connection' && onCreateDatabase && (
-          <button 
-            className="create-db-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              onCreateDatabase();
-            }}
-            title="Create new database"
-          >
-            <Plus size={12} />
-          </button>
-        )}
-      </div>
-      
-      {isExpanded && hasChildren && (
-        <div className="tree-children">
-          {children}
-        </div>
-      )}
-      
-      <style jsx>{`
-        .create-db-btn {
-          background: #313244;
-          border: none;
-          border-radius: 4px;
-          padding: 2px 4px;
-          cursor: pointer;
-          color: #89b4fa;
-          display: flex;
-          align-items: center;
-          transition: all 0.2s;
-        }
-        
-        .create-db-btn:hover {
-          background: #89b4fa;
-          color: #1e1e2e;
-          transform: scale(1.05);
-        }
-        
-        .spinner-small {
-          width: 12px;
-          height: 12px;
-          border: 2px solid #313244;
-          border-top-color: #89b4fa;
-          border-radius: 50%;
-          animation: spin 0.6s linear infinite;
-        }
-        
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 };

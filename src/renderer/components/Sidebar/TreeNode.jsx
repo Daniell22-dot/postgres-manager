@@ -14,6 +14,8 @@ const TreeNode = ({
   onDelete,
   onRefresh,
   onViewData,
+  onCreateDatabase,
+  onStartApi,
   children 
 }) => {
   const [contextMenu, setContextMenu] = useState(null);
@@ -42,6 +44,7 @@ const TreeNode = ({
         return [
           { label: '🔌 Expand / Connect', action: () => { onToggle?.(); closeMenu(); } },
           { label: '🔄 Refresh', action: () => { onRefresh?.(); closeMenu(); } },
+          { label: '🚀 Start REST API', action: () => { onStartApi?.(); closeMenu(); } },
           { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
           { label: '🗑 Delete Connection', action: () => { onDelete?.(); closeMenu(); }, danger: true },
         ];
@@ -91,6 +94,18 @@ const TreeNode = ({
         <span className="tree-label">{label}</span>
         {type === 'table' && context?.estimatedRows && (
           <span className="tree-badge">{Number(context.estimatedRows).toLocaleString()} rows</span>
+        )}
+        {type === 'connection' && onCreateDatabase && (
+          <button 
+            className="create-db-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCreateDatabase();
+            }}
+            title="Create new database"
+          >
+            <span style={{fontSize: '14px', lineHeight: '1'}}>+</span>
+          </button>
         )}
       </div>
 

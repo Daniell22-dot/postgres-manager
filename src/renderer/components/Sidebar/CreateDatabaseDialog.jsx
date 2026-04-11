@@ -128,25 +128,7 @@ const CreateDatabaseDialog = ({ connection, onClose, onDatabaseCreated }) => {
         </form>
       </div>
       
-      <style jsx>{`
-        .error-message {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px;
-          background: rgba(243, 139, 168, 0.1);
-          border: 1px solid #f38ba8;
-          border-radius: 6px;
-          color: #f38ba8;
-          font-size: 13px;
-          margin-bottom: 16px;
-        }
-        
-        small {
-          font-size: 11px;
-          color: #6c7086;
-        }
-      `}</style>
+
     </div>
   );
 };
