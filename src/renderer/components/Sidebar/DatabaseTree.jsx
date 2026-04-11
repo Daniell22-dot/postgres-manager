@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TreeNode from './TreeNode';
 import ConnectionDialog from './ConnectionDialog';
 import { ChevronRight, Database, FolderOpen, Table, Key, Loader } from 'lucide-react';
+import { useQueryStore } from '../../store/queryStore';
 
 const DatabaseTree = ({ onSelectDatabase }) => {
   const [connections, setConnections] = useState([]);
@@ -87,6 +88,45 @@ const DatabaseTree = ({ onSelectDatabase }) => {
     }
   };
 
+  const handleRefresh = (nodeId, nodeType, nodeContext) => {
+    // Clear node cache
+    setNodeData(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(nodeId);
+      return newMap;
+    });
+    
+    // If expanded, collapse and re-expand to force load
+    if (expandedNodes.has(nodeId)) {
+      setExpandedNodes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(nodeId);
+        return newSet;
+      });
+      setTimeout(() => toggleNode(nodeId, nodeType, nodeContext), 0);
+    }
+  };
+
+  const handleViewData = (nodeContext, limit) => {
+    // First, ensure the correct database is selected
+    const conn = connections.find(c => c.id === nodeContext.connectionId);
+    if (conn) {
+      onSelectDatabase(conn, nodeContext.database);
+    }
+    
+    // Build the query
+    const query = `SELECT * FROM "${nodeContext.schema}"."${nodeContext.name}"${limit ? ` LIMIT ${limit}` : ''};`;
+    
+    // Push into the query store current tab
+    const state = useQueryStore.getState();
+    const currentTab = state.queryTabs.find(tab => tab.id === state.activeTabId);
+    
+    if (currentTab) {
+      // Always update the current tab Content
+      state.updateTabContent(state.activeTabId, query);
+    }
+  };
+
   const renderTree = () => {
     return connections.map(connection => (
       <TreeNode
@@ -99,6 +139,7 @@ const DatabaseTree = ({ onSelectDatabase }) => {
         isExpanded={expandedNodes.has(`conn-${connection.id}`)}
         isLoading={loadingNodes.has(`conn-${connection.id}`)}
         onToggle={() => toggleNode(`conn-${connection.id}`, 'connection', { id: connection.id })}
+        onRefresh={() => handleRefresh(`conn-${connection.id}`, 'connection', { id: connection.id })}
         onDelete={() => handleDeleteConnection(connection.id)}
         children={renderChildren(`conn-${connection.id}`, 'database', { connectionId: connection.id })}
         onSelect={() => {}}
@@ -143,7 +184,23 @@ const DatabaseTree = ({ onSelectDatabase }) => {
             estimatedRows: item.estimated_rows,
             comment: item.comment
           };
-          break;
+          
+          return (
+            <TreeNode
+              key={nodeId}
+              id={nodeId}
+              label={item.name}
+              icon={icon}
+              type={childType}
+              context={childContext}
+              isExpanded={expandedNodes.has(nodeId)}
+              isLoading={loadingNodes.has(nodeId)}
+              onToggle={() => toggleNode(nodeId, childType, childContext)}
+              onRefresh={() => handleRefresh(nodeId, childType, childContext)}
+              onViewData={(limit) => handleViewData(childContext, limit)}
+              children={renderChildren(nodeId, 'column', childContext)}
+            />
+          );
         case 'column':
           icon = <Key size={12} />;
           return (
@@ -172,17 +229,18 @@ const DatabaseTree = ({ onSelectDatabase }) => {
           isExpanded={expandedNodes.has(nodeId)}
           isLoading={loadingNodes.has(nodeId)}
           onToggle={() => toggleNode(nodeId, childType, childContext)}
-          onSelect={() => {
-            if (childType === 'database') {
-              const connection = connections.find(c => c.id === context.connectionId);
-              handleSelectDatabase(connection, item.name);
-            }
-          }}
-          children={renderChildren(
-            nodeId, 
+          onRefresh={() => handleRefresh(nodeId, childType, childContext)}
+          onSelect={
+            childType === 'database'
+              ? () => handleSelectDatabase(
+                  connections.find(c => c.id === childContext.connectionId),
+                  item.name
+                )
+              : undefined
+          }
+          children={renderChildren(nodeId, 
             childType === 'database' ? 'schema' : 
-            childType === 'schema' ? 'table' : 
-            childType === 'table' ? 'column' : null,
+            childType === 'schema' ? 'table' : null, 
             childContext
           )}
         />

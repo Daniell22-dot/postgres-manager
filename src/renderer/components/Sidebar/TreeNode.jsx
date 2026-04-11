@@ -12,6 +12,8 @@ const TreeNode = ({
   onToggle, 
   onSelect,
   onDelete,
+  onRefresh,
+  onViewData,
   children 
 }) => {
   const [contextMenu, setContextMenu] = useState(null);
@@ -39,6 +41,7 @@ const TreeNode = ({
       case 'connection':
         return [
           { label: '🔌 Expand / Connect', action: () => { onToggle?.(); closeMenu(); } },
+          { label: '🔄 Refresh', action: () => { onRefresh?.(); closeMenu(); } },
           { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
           { label: '🗑 Delete Connection', action: () => { onDelete?.(); closeMenu(); }, danger: true },
         ];
@@ -46,16 +49,22 @@ const TreeNode = ({
         return [
           { label: '✅ Select Database', action: () => { onSelect?.(); closeMenu(); } },
           { label: '📂 Expand Schemas', action: () => { onToggle?.(); closeMenu(); } },
+          { label: '🔄 Refresh', action: () => { onRefresh?.(); closeMenu(); } },
           { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
         ];
       case 'schema':
         return [
           { label: '📂 Expand Tables', action: () => { onToggle?.(); closeMenu(); } },
+          { label: '🔄 Refresh', action: () => { onRefresh?.(); closeMenu(); } },
           { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
         ];
       case 'table':
         return [
+          { label: '📊 View first 50 rows', action: () => { onViewData?.(50); closeMenu(); } },
+          { label: '📊 View first 100 rows', action: () => { onViewData?.(100); closeMenu(); } },
+          { label: '📊 View all rows', action: () => { onViewData?.(null); closeMenu(); } },
           { label: '📂 View Columns', action: () => { onToggle?.(); closeMenu(); } },
+          { label: '🔄 Refresh', action: () => { onRefresh?.(); closeMenu(); } },
           { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
         ];
       default:
