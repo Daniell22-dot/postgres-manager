@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronRight, ChevronDown, Loader } from 'lucide-react';
 
 const TreeNode = ({ 
@@ -11,44 +11,110 @@ const TreeNode = ({
   isLoading, 
   onToggle, 
   onSelect,
+  onDelete,
   children 
 }) => {
-  const hasChildren = children && (typeof children === 'object' ? Object.keys(children).length > 0 : true);
-  
+  const [contextMenu, setContextMenu] = useState(null);
+
+  // Correctly detect if this node has / can have children
+  const hasChildren = Array.isArray(children)
+    ? children.length > 0
+    : !!children;
+
+  const handleClick = () => {
+    if (onToggle) onToggle();
+    if (onSelect) onSelect();
+  };
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const closeMenu = () => setContextMenu(null);
+
+  const menuItems = () => {
+    switch (type) {
+      case 'connection':
+        return [
+          { label: '🔌 Expand / Connect', action: () => { onToggle?.(); closeMenu(); } },
+          { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+          { label: '🗑 Delete Connection', action: () => { onDelete?.(); closeMenu(); }, danger: true },
+        ];
+      case 'database':
+        return [
+          { label: '✅ Select Database', action: () => { onSelect?.(); closeMenu(); } },
+          { label: '📂 Expand Schemas', action: () => { onToggle?.(); closeMenu(); } },
+          { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+        ];
+      case 'schema':
+        return [
+          { label: '📂 Expand Tables', action: () => { onToggle?.(); closeMenu(); } },
+          { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+        ];
+      case 'table':
+        return [
+          { label: '📂 View Columns', action: () => { onToggle?.(); closeMenu(); } },
+          { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+        ];
+      default:
+        return [
+          { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+        ];
+    }
+  };
+
   return (
-    <div className="tree-node">
+    <div className="tree-node" onContextMenu={handleContextMenu}>
       <div 
         className="tree-node-content"
-        onClick={() => {
-          if (hasChildren && onToggle) {
-            onToggle();
-          }
-          if (onSelect) {
-            onSelect();
-          }
-        }}
+        onClick={handleClick}
       >
         <span className="tree-icon">
           {isLoading ? (
             <Loader size={14} className="spinner" />
-          ) : hasChildren ? (
+          ) : (
             isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-          ) : null}
+          )}
         </span>
         {icon && <span className="tree-icon">{icon}</span>}
         <span className="tree-label">{label}</span>
-        {type === 'table' && context.estimatedRows && (
-          <span className="tree-badge">{context.estimatedRows.toLocaleString()} rows</span>
+        {type === 'table' && context?.estimatedRows && (
+          <span className="tree-badge">{Number(context.estimatedRows).toLocaleString()} rows</span>
         )}
       </div>
-      
+
       {isExpanded && hasChildren && (
         <div className="tree-children">
           {children}
         </div>
       )}
+
+      {contextMenu && (
+        <>
+          <div 
+            style={{ position: 'fixed', inset: 0, zIndex: 999 }} 
+            onClick={closeMenu} 
+          />
+          <div
+            className="context-menu"
+            style={{ position: 'fixed', top: contextMenu.y, left: contextMenu.x, zIndex: 1000 }}
+          >
+            {menuItems().map((item, i) => (
+              <button
+                key={i}
+                className={`context-menu-item${item.danger ? ' danger' : ''}`}
+                onClick={item.action}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
-export default TreeNode;
+export default TreeNode;

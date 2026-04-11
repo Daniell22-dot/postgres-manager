@@ -12,8 +12,8 @@ const store = new Store({
   }
 });
 
-// Encryption setup
-const ENCRYPTION_KEY = crypto.randomBytes(32);
+// Deterministic encryption key — same across restarts so saved passwords can be decrypted
+const ENCRYPTION_KEY = crypto.scryptSync('postgres-manager-secret-v1', 'salt-pg-mgr', 32);
 const IV_LENGTH = 16;
 
 function encrypt(text) {
@@ -111,16 +111,16 @@ function setupConnectionHandlers(ipcMain) {
       testPool = new Pool({
         host: config.host,
         port: config.port,
-        database: config.database,
+        database: config.database || 'postgres',
         user: config.username,
         password: config.password,
-        connectionTimeoutMillis: 5000,
+        connectionTimeoutMillis: 8000,
+        max: 1,
       });
       
       const client = await testPool.connect();
       const result = await client.query('SELECT version() as version, NOW() as time');
       client.release();
-      await testPool.end();
       
       return {
         success: true,
@@ -133,7 +133,10 @@ function setupConnectionHandlers(ipcMain) {
         error: error.message
       };
     } finally {
-      if (testPool) await testPool.end();
+      // Only call end once — in finally block
+      if (testPool) {
+        try { await testPool.end(); } catch (_) {}
+      }
     }
   });
 }

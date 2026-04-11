@@ -80,6 +80,13 @@ const DatabaseTree = ({ onSelectDatabase }) => {
     onSelectDatabase(connection, database);
   };
 
+  const handleDeleteConnection = async (connectionId) => {
+    if (window.confirm('Delete this connection? This cannot be undone.')) {
+      await window.electronAPI.deleteConnection(connectionId);
+      await loadConnections();
+    }
+  };
+
   const renderTree = () => {
     return connections.map(connection => (
       <TreeNode
@@ -92,6 +99,7 @@ const DatabaseTree = ({ onSelectDatabase }) => {
         isExpanded={expandedNodes.has(`conn-${connection.id}`)}
         isLoading={loadingNodes.has(`conn-${connection.id}`)}
         onToggle={() => toggleNode(`conn-${connection.id}`, 'connection', { id: connection.id })}
+        onDelete={() => handleDeleteConnection(connection.id)}
         children={renderChildren(`conn-${connection.id}`, 'database', { connectionId: connection.id })}
         onSelect={() => {}}
       />

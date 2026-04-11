@@ -114,30 +114,36 @@ function setupMetadataHandlers(ipcMain) {
   });
 }
 
-async function getConnectionById(id) {
-  const Database = require('better-sqlite3');
-  const path = require('path');
-  const { app } = require('electron');
-  
-  const userDataPath = app.getPath('userData');
-  const dbPath = path.join(userDataPath, 'postgres-manager.db');
-  const db = new Database(dbPath);
-  
-  const stmt = db.prepare('SELECT * FROM connections WHERE id = ?');
-  const connection = stmt.get(id);
-  
-  // Decrypt password
-  if (connection && connection.encrypted_password) {
-    const crypto = require('crypto');
-    const [ivHex, encryptedText] = connection.encrypted_password.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from('01234567890123456789012345678901'), iv);
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    connection.password = decrypted;
+function getConnectionById(id) {
+  const Store = require('electron-store');
+  const crypto = require('crypto');
+
+  const store = new Store({
+    name: 'postgres-manager-data',
+    defaults: { connections: [] }
+  });
+
+  const connections = store.get('connections', []);
+  // id is stored as a number (Date.now()) but IPC may pass it as string
+  const connection = connections.find(c => String(c.id) === String(id));
+  if (!connection) return null;
+
+  // Decrypt password using the same deterministic key as connections.js
+  if (connection.encrypted_password) {
+    try {
+      const ENCRYPTION_KEY = crypto.scryptSync('postgres-manager-secret-v1', 'salt-pg-mgr', 32);
+      const [ivHex, encryptedText] = connection.encrypted_password.split(':');
+      const iv = Buffer.from(ivHex, 'hex');
+      const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
+      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      connection.password = decrypted;
+    } catch (err) {
+      console.error('Failed to decrypt password for connection', id, err.message);
+      connection.password = '';
+    }
   }
-  
-  db.close();
+
   return connection;
 }
 

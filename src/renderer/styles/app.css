@@ -978,3 +978,56 @@ body {
   text-align: center;
   color: #6c7086;
 }
+
+/* ================================
+   Context Menu (TreeNode.jsx)
+   ================================ */
+.context-menu {
+  background: #1e1e2e;
+  border: 1px solid #313244;
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 200px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: #cdd6f4;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.context-menu-item:hover {
+  background: #313244;
+}
+
+.context-menu-item.danger {
+  color: #f38ba8;
+}
+
+.context-menu-item.danger:hover {
+  background: rgba(243, 139, 168, 0.15);
+}
+
+/* Tree badge */
+.tree-badge {
+  margin-left: auto;
+  font-size: 10px;
+  color: #6c7086;
+  background: #313244;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
