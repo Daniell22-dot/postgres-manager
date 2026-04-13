@@ -24,7 +24,7 @@ function createWindow() {
       contextIsolation: true,
       webSecurity: !isDev,
     },
-    icon: path.join(__dirname, '../../resources/icon.png'),
+    icon: path.join(__dirname, '../../resources/Postgres Manager Logo with Elephant Icon.png'),
     titleBarStyle: 'hiddenInset', // Modern look on Mac
     show: false, // Show after ready
   });

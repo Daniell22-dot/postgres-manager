@@ -10,7 +10,7 @@ import { useUIStore } from './store/uiStore';
 import './styles/app.css';
 
 function App() {
-  const { activeConnection, activeDatabase, activeTable, setActiveConnection, setActiveTable} = useConnectionStore();
+  const { activeConnection, activeDatabase, setActiveConnection, setActiveTable } = useConnectionStore();
   const { dialogs, closeDialog } = useUIStore();
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
@@ -22,9 +22,9 @@ function App() {
 
   const handleSelectTable = (connection, database, schema, table) => {
     console.log('Table selected:', connection.name, database, schema, table);
-    setActiveConnection(connection, database, schema, table);
+    setActiveConnection(connection, database);
+    setActiveTable(connection, database, schema, table);
   };
-
 
   const handleMouseMove = (e) => {
     if (isResizing) {
@@ -51,7 +51,7 @@ function App() {
   return (
     <ErrorBoundary>
       <div className="app">
-        <Toaster 
+        <Toaster
           position="bottom-right"
           toastOptions={{
             style: {
@@ -61,24 +61,34 @@ function App() {
             }
           }}
         />
-        
+
         <div className="sidebar" style={{ width: sidebarWidth }}>
           <div className="sidebar-header">
-            <h2>Postgres Manager</h2>
+            <div className="sidebar-brand">
+              <img
+                src="../../../resources/Postgres Manager Logo with Elephant Icon.png"
+                alt="Postgres Manager"
+                className="sidebar-logo"
+              />
+              <h2>Postgres Manager</h2>
+            </div>
           </div>
-          
-          <DatabaseTree onSelectDatabase={handleSelectDatabase} />
-          
-          <div 
+
+          <DatabaseTree
+            onSelectDatabase={handleSelectDatabase}
+            onSelectTable={handleSelectTable}
+          />
+
+          <div
             className="resize-handle"
             onMouseDown={() => setIsResizing(true)}
           />
         </div>
-        
+
         <div className="main-content">
-          {activeConnection ? (
-            <ErrorBoundary key={activeConnection.id}>
-              <Editor 
+          {activeConnection && activeDatabase ? (
+            <ErrorBoundary key={`${activeConnection.id}-${activeDatabase}`}>
+              <Editor
                 connection={activeConnection}
                 database={activeDatabase}
               />
@@ -86,7 +96,7 @@ function App() {
           ) : (
             <div className="welcome-screen">
               <h1> Welcome to Postgres Manager</h1>
-              <p>Click "New Connection" in the sidebar to get started</p>
+              <p>Click a database in the sidebar to open the query shell and history</p>
               <div className="features">
                 <div className="feature">
                   <h3> Fast & Lightweight</h3>
@@ -98,20 +108,19 @@ function App() {
                 </div>
                 <div className="feature">
                   <h3> Query History</h3>
-                  <p>Never lose your important queries again</p>
+                  <p>Open any database to access the query editor and history</p>
                 </div>
               </div>
             </div>
           )}
         </div>
-        
+
         <StatusBar />
-        
+
         {dialogs.settingsDialog && (
           <SettingsDialog onClose={() => closeDialog('settingsDialog')} />
         )}
       </div>
-      
     </ErrorBoundary>
   );
 }

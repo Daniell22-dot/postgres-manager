@@ -124,21 +124,35 @@ function setupMetadataHandlers(ipcMain) {
 
 async function getConnectionById(id) {
   const Store = require('electron-store');
+  const crypto = require('crypto');
   const store = new Store({ name: 'postgres-manager-data' });
   const connections = store.get('connections', []);
-  const connection = connections.find(c => c.id === id);
-  
-  if (connection && connection.encrypted_password) {
-    const crypto = require('crypto');
-    const [ivHex, encryptedText] = connection.encrypted_password.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from('01234567890123456789012345678901'), iv);
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    connection.password = decrypted;
+  const connection = connections.find(c => String(c.id) === String(id));
+
+  if (!connection) {
+    return null;
   }
-  
-  return connection;
+
+  let password = '';
+  if (connection.encrypted_password) {
+    try {
+      const ENCRYPTION_KEY = crypto.scryptSync('postgres-manager-secret-v1', 'salt-pg-mgr', 32);
+      const [ivHex, encryptedText] = connection.encrypted_password.split(':');
+      if (ivHex && encryptedText) {
+        const iv = Buffer.from(ivHex, 'hex');
+        const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
+        password = decipher.update(encryptedText, 'hex', 'utf8');
+        password += decipher.final('utf8');
+      }
+    } catch (error) {
+      console.error('Failed to decrypt password for metadata connection:', error.message);
+    }
+  }
+
+  return {
+    ...connection,
+    password
+  };
 }
 
 module.exports = { setupMetadataHandlers };

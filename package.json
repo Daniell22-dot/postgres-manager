@@ -56,7 +56,8 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "resources/icon.ico"
+      "icon": "resources/icon.ico",
+      "verifyUpdateCodeSignature": false
     },
     "mac": {
       "target": "dmg",
