@@ -44,6 +44,20 @@ function decrypt(text) {
   }
 }
 
+async function getConnectionById(id) {
+  const connections = store.get('connections', []);
+  const connection = connections.find(c => String(c.id) === String(id));
+
+  if (!connection) {
+    return null;
+  }
+
+  return {
+    ...connection,
+    password: connection.encrypted_password ? decrypt(connection.encrypted_password) : '',
+  };
+}
+
 async function initDatabase() {
   console.log('Storage initialized using electron-store');
   return true;
@@ -177,8 +191,23 @@ ipcMain.handle('db:createDatabase', async (event, connectionId, databaseName, ow
     return { success: false, error: 'Connection not found' };
   }
   
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(databaseName)) {
+    return { success: false, error: 'Invalid database name' };
+  }
+
+  if (owner && owner.trim() && !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(owner.trim())) {
+    return { success: false, error: 'Invalid owner name' };
+  }
+
+  const allowedEncodings = new Set(['UTF8', 'LATIN1', 'SQL_ASCII']);
+  const normalizedEncoding = encoding || 'UTF8';
+  if (!allowedEncodings.has(normalizedEncoding)) {
+    return { success: false, error: 'Invalid encoding' };
+  }
+  
   const { Pool } = require('pg');
   let pool;
+  let client;
   
   try {
     // Connect to default 'postgres' database to create new database
@@ -191,31 +220,30 @@ ipcMain.handle('db:createDatabase', async (event, connectionId, databaseName, ow
       connectionTimeoutMillis: 10000,
     });
     
-    const client = await pool.connect();
+    client = await pool.connect();
     
     // Build CREATE DATABASE command
     let createSql = `CREATE DATABASE "${databaseName}"`;
     
     if (owner && owner.trim()) {
-      createSql += ` OWNER = "${owner}"`;
+      createSql += ` OWNER = "${owner.trim()}"`;
     }
     
-    if (encoding) {
-      createSql += ` ENCODING = '${encoding}'`;
-    }
+    createSql += ` ENCODING = '${normalizedEncoding}'`;
     
     console.log('Executing:', createSql);
     
     await client.query(createSql);
-    client.release();
-    await pool.end();
     
     return { success: true };
   } catch (error) {
     console.error('Error creating database:', error);
     return { success: false, error: error.message };
   } finally {
-    if (pool) await pool.end();
+    if (client) client.release();
+    if (pool) {
+      try { await pool.end(); } catch (_) {}
+    }
   }
 });
 }

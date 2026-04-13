@@ -1,6 +1,7 @@
 {
   "name": "postgres-manager",
   "version": "1.0.0",
+  "author": "Daniel Manyasa",
   "description": "Fast PostgreSQL manager for 20+ databases",
   "main": "src/main/index.js",
   "scripts": {
@@ -37,10 +38,17 @@
   },
   "build": {
     "appId": "com.postgres.manager",
-    "productName": "Postgres Manager",
+    "productName": "PostgresManager",
     "directories": {
       "output": "release"
     },
+    "extraResources": [
+      {
+        "from": "resources",
+        "to": "resources",
+        "filter": ["**/*"]
+      }
+    ],
     "files": [
       "src/**/*",
       "build/**/*",

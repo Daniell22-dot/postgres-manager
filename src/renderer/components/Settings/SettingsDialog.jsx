@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { X, Palette, Shield, Key, Users, Bell, Database, Zap } from 'lucide-react';
 import ThemeSettings from './ThemeSettings';
-import SecuritySettings from './SecuritySettings';
-import LicenseSettings from './LicenseSettings';
-
 const SettingsDialog = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('theme');
   
@@ -43,8 +40,6 @@ const SettingsDialog = ({ onClose }) => {
           
           <div className="settings-content">
             {activeTab === 'theme' && <ThemeSettings />}
-            {activeTab === 'security' && <SecuritySettings />}
-            {activeTab === 'license' && <LicenseSettings />}
             {/* Other tabs... */}
           </div>
         </div>

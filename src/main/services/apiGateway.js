@@ -4,6 +4,31 @@ const path = require('path');
 const crypto = require('crypto');
 const { app } = require('electron');
 
+function getPostgrestBinaryPath() {
+  const executableName = process.platform === 'win32' ? 'postgrest.exe' : 'postgrest';
+  const candidatePaths = app.isPackaged
+    ? [
+        path.join(process.resourcesPath, 'resources', 'bin', process.platform === 'win32' ? 'windows' : process.platform),
+        path.join(process.resourcesPath, 'bin', process.platform === 'win32' ? 'windows' : process.platform),
+      ]
+    : [
+        path.join(__dirname, '../../../../resources/bin', process.platform === 'win32' ? 'windows' : process.platform),
+      ];
+
+  for (const basePath of candidatePaths) {
+    const fullPath = path.join(basePath, executableName);
+    if (fs.existsSync(fullPath)) {
+      return fullPath;
+    }
+  }
+
+  throw new Error(
+    `PostgREST binary not found. Looked for ${executableName} in: ${candidatePaths
+      .map(candidate => path.join(candidate, executableName))
+      .join(', ')}`
+  );
+}
+
 class APIGateway {
   constructor() {
     this.runningInstances = new Map();
@@ -30,15 +55,7 @@ class APIGateway {
     
     fs.writeFileSync(configPath, config);
     
-    const isDev = !app.isPackaged;
-    // Resolve postgrest binary path
-    const executableName = process.platform === 'win32' ? 'postgrest.exe' : 'postgrest';
-    let binPath;
-    if (isDev) {
-      binPath = path.join(__dirname, '../../../../resources/bin/windows', executableName);
-    } else {
-      binPath = path.join(process.resourcesPath, 'bin/windows', executableName);
-    }
+    const binPath = getPostgrestBinaryPath();
     
     const postgrest = spawn(binPath, [configPath]);
     
@@ -48,6 +65,22 @@ class APIGateway {
 
     postgrest.stderr.on('data', (data) => {
       console.error(`PostgREST (${connectionId}) Error: ${data}`);
+    });
+
+    postgrest.on('error', (error) => {
+      console.error(`PostgREST (${connectionId}) Failed to start:`, error);
+    });
+
+    postgrest.on('exit', (code, signal) => {
+      console.log(`PostgREST (${connectionId}) exited with code ${code} signal ${signal}`);
+      this.runningInstances.delete(connectionId);
+      try {
+        if (fs.existsSync(configPath)) {
+          fs.unlinkSync(configPath);
+        }
+      } catch (e) {
+        console.warn(`Failed to clean up PostgREST config for connection ${connectionId}:`, e.message);
+      }
     });
     
     const urls = {

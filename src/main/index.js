@@ -10,7 +10,7 @@ const { setupMetadataHandlers } = require('./ipc-handlers/metadata');
 Store.initRenderer();
 
 let mainWindow;
-const isDev = process.argv.includes('--dev');
+const isDev = !app.isPackaged;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
