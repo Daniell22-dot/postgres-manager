@@ -3,6 +3,9 @@ import { FixedSizeList as List } from 'react-window';
 import { X, ChevronUp, ChevronDown, Copy, Download, Maximize2, Minimize2 } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import toast from 'react-hot-toast';
+import { detectGeometryColumns } from '../../utils/geometryUtils';
+import GeometryViewer from './GeometryViewer';
+import { Map } from 'lucide-react';
 
 const ResultsGrid = ({ results, onClose, onExport }) => {
   const [sortColumn, setSortColumn] = useState(null);
@@ -11,6 +14,21 @@ const ResultsGrid = ({ results, onClose, onExport }) => {
   const { resultsHeight, setResultsHeight, isResultsPanelVisible } = useUIStore();
   
   const [isResizing, setIsResizing] = useState(false);
+  const [viewMode, setViewMode] = useState('data'); // 'data' or 'map'
+
+  const geometryColumns = useMemo(() => {
+    return detectGeometryColumns(results?.fields, results?.rows);
+  }, [results]);
+
+  // If geometry columns exist, default to Map view if it wasn't already set
+  React.useEffect(() => {
+    if (geometryColumns.length > 0 && viewMode === 'data') {
+      // Optional: Auto-switch to map view when geometry is detected
+      // setViewMode('map'); 
+    } else if (geometryColumns.length === 0) {
+      setViewMode('data');
+    }
+  }, [geometryColumns]);
 
   const rows = useMemo(() => {
     if (!results.rows) return [];
@@ -183,6 +201,23 @@ const ResultsGrid = ({ results, onClose, onExport }) => {
         </div>
         
         <div className="results-actions">
+          {geometryColumns.length > 0 && (
+            <div className="view-toggle">
+              <button 
+                className={`action-btn ${viewMode === 'data' ? 'active' : ''}`}
+                onClick={() => setViewMode('data')}
+              >
+                Data
+              </button>
+              <button 
+                className={`action-btn ${viewMode === 'map' ? 'active' : ''}`}
+                onClick={() => setViewMode('map')}
+              >
+                <Map size={14} style={{ marginRight: '4px', display: 'inline' }}/> Map
+              </button>
+            </div>
+          )}
+          <div className="action-divider"></div>
           <button className="action-btn" onClick={() => setIsMaximized(!isMaximized)}>
             {isMaximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
@@ -195,40 +230,49 @@ const ResultsGrid = ({ results, onClose, onExport }) => {
         </div>
       </div>
       
-      {/* Column Headers */}
-      <div className="grid-header">
-        <div className="grid-cell index-cell">#</div>
-        {columns.map((col, index) => (
-          <div 
-            key={index} 
-            className="grid-cell sortable"
-            onClick={() => handleSort(col)}
-          >
-            {col}
-            {sortColumn === col && (
-              <span className="sort-icon">
-                {sortDirection === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-              </span>
+      {viewMode === 'data' ? (
+        <>
+          {/* Column Headers */}
+          <div className="grid-header">
+            <div className="grid-cell index-cell">#</div>
+            {columns.map((col, index) => (
+              <div 
+                key={index} 
+                className="grid-cell sortable"
+                onClick={() => handleSort(col)}
+              >
+                {col}
+                {sortColumn === col && (
+                  <span className="sort-icon">
+                    {sortDirection === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          {/* Data Grid */}
+          <div className="grid-body">
+            {rows.length === 0 ? (
+              <div className="no-results">No data to display</div>
+            ) : (
+              <List
+                height={resultsHeight - 80}
+                itemCount={rows.length}
+                itemSize={35}
+                width="100%"
+              >
+                {RowRenderer}
+              </List>
             )}
           </div>
-        ))}
-      </div>
-      
-      {/* Data Grid */}
-      <div className="grid-body">
-        {rows.length === 0 ? (
-          <div className="no-results">No data to display</div>
-        ) : (
-          <List
-            height={resultsHeight - 80}
-            itemCount={rows.length}
-            itemSize={35}
-            width="100%"
-          >
-            {RowRenderer}
-          </List>
-        )}
-      </div>
+        </>
+      ) : (
+        <GeometryViewer 
+          results={results} 
+          geomColumn={geometryColumns[0]} 
+        />
+      )}
       
       {/* Resize Handle */}
       <div 

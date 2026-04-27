@@ -13,6 +13,14 @@ export default defineConfig({
       input: path.join(__dirname, 'src/renderer/index.html'),
     },
   },
+  resolve: {
+    alias: {
+      buffer: 'buffer/',
+    },
+  },
+  define: {
+    global: 'globalThis',
+  },
   server: {
     port: 5173,
   },
