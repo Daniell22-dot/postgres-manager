@@ -72,8 +72,10 @@ const Editor = ({ connection, database }) => {
       return;
     }
     
-    if (querySettings.confirmBeforeExecute && currentSql.toLowerCase().includes('delete') || 
-        currentSql.toLowerCase().includes('drop') || currentSql.toLowerCase().includes('truncate')) {
+    const sqlLower = currentSql.toLowerCase();
+    const isDestructive = sqlLower.includes('delete') || sqlLower.includes('drop') || sqlLower.includes('truncate');
+    
+    if (querySettings.confirmBeforeExecute && isDestructive) {
       const confirmed = window.confirm('⚠️ This query modifies data. Are you sure?');
       if (!confirmed) return;
     }

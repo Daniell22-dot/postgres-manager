@@ -109,6 +109,66 @@ const ResultsGrid = ({ results, onClose, onExport }) => {
 
   if (!isResultsPanelVisible) return null;
 
+  // Handle error results
+  if (results.error) {
+    return (
+      <div className="results-panel" style={{ height: 'auto', minHeight: '80px' }}>
+        <div className="results-header">
+          <div className="results-info">
+            <span className="results-title">Error</span>
+            {results.duration && (
+              <span className="results-stats">
+                {(results.duration / 1000).toFixed(2)}s
+              </span>
+            )}
+          </div>
+          <div className="results-actions">
+            <button className="action-btn" onClick={onClose}>
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+        <div className="query-message error-message">
+          <span>{results.error}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle non-SELECT results (CREATE, INSERT, UPDATE, DELETE, DROP, ALTER, etc.)
+  if (!results.fields || results.fields.length === 0) {
+    return (
+      <div className="results-panel" style={{ height: 'auto', minHeight: '80px' }}>
+        <div className="results-header">
+          <div className="results-info">
+            <span className="results-title">Results</span>
+            <span className="results-stats">
+              {results.command && `${results.command}`}
+              {results.duration && ` · ${(results.duration / 1000).toFixed(2)}s`}
+            </span>
+          </div>
+          <div className="results-actions">
+            <button className="action-btn" onClick={onClose}>
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+        <div className="query-message success-message">
+          <span>
+            {results.command === 'INSERT' && `${results.rowCount ?? 0} row(s) inserted successfully.`}
+            {results.command === 'UPDATE' && `${results.rowCount ?? 0} row(s) updated successfully.`}
+            {results.command === 'DELETE' && `${results.rowCount ?? 0} row(s) deleted successfully.`}
+            {results.command === 'CREATE' && 'Table/object created successfully.'}
+            {results.command === 'DROP' && 'Table/object dropped successfully.'}
+            {results.command === 'ALTER' && 'Table/object altered successfully.'}
+            {!['INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER'].includes(results.command) && 
+              `${results.command || 'Query'} executed successfully.`}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="results-panel" style={{ height: isMaximized ? '100%' : resultsHeight }}>
       {/* Header */}

@@ -23,15 +23,33 @@ export const useDatabaseConnection = () => {
       const endTime = performance.now();
       
       if (result.success) {
+        const duration = result.duration || (endTime - startTime);
+        const rowCount = result.rowCount ?? 0;
+        const command = result.command || '';
+        
         setResults({
-          rows: result.rows,
-          rowCount: result.rowCount,
-          fields: result.fields,
-          duration: result.duration || (endTime - startTime),
-          command: result.command
+          rows: result.rows || [],
+          rowCount: rowCount,
+          fields: result.fields || [],
+          duration: duration,
+          command: command
         });
         
-        toast.success(`Query returned ${result.rowCount.toLocaleString()} rows in ${((endTime - startTime) / 1000).toFixed(2)}s`);
+        // Show appropriate message based on command type
+        const durationStr = `${(duration / 1000).toFixed(2)}s`;
+        if (command === 'SELECT') {
+          toast.success(`Query returned ${rowCount.toLocaleString()} rows in ${durationStr}`);
+        } else if (command === 'INSERT') {
+          toast.success(`${rowCount} row(s) inserted in ${durationStr}`);
+        } else if (command === 'UPDATE') {
+          toast.success(`${rowCount} row(s) updated in ${durationStr}`);
+        } else if (command === 'DELETE') {
+          toast.success(`${rowCount} row(s) deleted in ${durationStr}`);
+        } else if (command) {
+          toast.success(`${command} executed successfully in ${durationStr}`);
+        } else {
+          toast.success(`Query executed successfully in ${durationStr}`);
+        }
         return result;
       } else {
         toast.error(`Query failed: ${result.error}`);

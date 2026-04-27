@@ -645,6 +645,30 @@ body {
   background: #89b4fa;
 }
 
+/* Query result messages (non-SELECT) */
+.query-message {
+  padding: 16px 20px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.query-message.success-message {
+  background: rgba(166, 227, 161, 0.08);
+  color: #a6e3a1;
+  border-left: 3px solid #a6e3a1;
+}
+
+.query-message.error-message {
+  background: rgba(243, 139, 168, 0.08);
+  color: #f38ba8;
+  border-left: 3px solid #f38ba8;
+  font-family: monospace;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
 /* ================================
    Connection Dialog (ConnectionDialog.jsx)
    ================================ */
