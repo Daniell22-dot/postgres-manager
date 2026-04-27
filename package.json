@@ -27,6 +27,7 @@
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
     "react-window": "^1.8.10",
+    "util": "^0.12.5",
     "wkx": "^0.5.0",
     "zustand": "^4.4.7"
   },

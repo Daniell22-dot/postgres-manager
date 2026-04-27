@@ -16,6 +16,7 @@ export default defineConfig({
   resolve: {
     alias: {
       buffer: 'buffer/',
+      util: 'util/',
     },
   },
   define: {
