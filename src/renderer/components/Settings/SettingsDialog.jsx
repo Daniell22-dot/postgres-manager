@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { X, Palette, Shield, Key, Users, Bell, Database, Zap } from 'lucide-react';
 import ThemeSettings from './ThemeSettings';
 import DeveloperSettings from './DeveloperSettings';
+import LicenseSettings from './LicenseSettings';
+import SecuritySettings from './SecuritySettings';
+import NotificationSettings from './NotificationSettings';
+import DatabaseSettings from './DatabaseSettings';
+import TeamSettings from './TeamSettings';
 
 const SettingsDialog = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('theme');
@@ -9,11 +14,11 @@ const SettingsDialog = ({ onClose }) => {
   const tabs = [
     { id: 'theme', name: 'Appearance', icon: Palette },
     { id: 'developer', name: 'Developer', icon: Zap },
-    { id: 'security', name: 'Security', icon: Shield },
     { id: 'license', name: 'License', icon: Key },
-    { id: 'team', name: 'Team', icon: Users },
+    { id: 'security', name: 'Security', icon: Shield },
     { id: 'notifications', name: 'Notifications', icon: Bell },
-    { id: 'database', name: 'Database', icon: Database }
+    { id: 'database', name: 'Database', icon: Database },
+    { id: 'team', name: 'Team', icon: Users }
   ];
   
   return (
@@ -43,7 +48,11 @@ const SettingsDialog = ({ onClose }) => {
           <div className="settings-content">
             {activeTab === 'theme' && <ThemeSettings />}
             {activeTab === 'developer' && <DeveloperSettings />}
-            {/* Other tabs... */}
+            {activeTab === 'license' && <LicenseSettings />}
+            {activeTab === 'security' && <SecuritySettings />}
+            {activeTab === 'notifications' && <NotificationSettings />}
+            {activeTab === 'database' && <DatabaseSettings />}
+            {activeTab === 'team' && <TeamSettings />}
           </div>
         </div>
 

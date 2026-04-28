@@ -10,25 +10,37 @@
     "node_modules/**/*",
     "database/**/*"
   ],
+  "extraResources": [
+    {
+      "from": "resources",
+      "to": "resources",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ],
   "win": {
-    "target": ["nsis", "portable"],
-    "icon": "resources/icon.ico",
-    "artifactName": "${productName}-${version}-Setup.${ext}"
-  },
-  "mac": {
-    "target": ["dmg", "zip"],
-    "icon": "resources/icon.icns",
-    "category": "public.app-category.developer-tools"
-  },
-  "linux": {
-    "target": ["AppImage", "deb"],
-    "icon": "resources/icon.png",
-    "category": "Development"
+    "target": ["nsis"],
+    "icon": "resources/Postgres Manager Logo with Elephant Icon.png",
+    "artifactName": "${productName}-Setup-${version}.${ext}"
   },
   "nsis": {
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
-    "createStartMenuShortcut": true
+    "createStartMenuShortcut": true,
+    "shortcutName": "Postgres Manager",
+    "license": "resources/eula.txt",
+    "include": "build/installer.nsh",
+    "installerHeaderIcon": "resources/Postgres Manager Logo with Elephant Icon.png",
+    "uninstallerIcon": "resources/Postgres Manager Logo with Elephant Icon.png"
+  },
+  "mac": {
+    "target": ["dmg"],
+    "icon": "resources/Postgres Manager Logo with Elephant Icon.png"
+  },
+  "linux": {
+    "target": ["AppImage"],
+    "icon": "resources/Postgres Manager Logo with Elephant Icon.png"
   }
 }

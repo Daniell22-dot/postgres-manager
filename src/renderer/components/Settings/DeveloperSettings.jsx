@@ -141,15 +141,64 @@ const DeveloperSettings = () => {
               </p>
             </div>
             
-            <div className="flex justify-end">
+            {/* Postgres Manager Key */}
+            <div className="developer-card bg-blue-500/5 border border-blue-500/20 rounded-xl p-4">
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Zap size={14} className="text-yellow-500" />
+                  <span className="text-xs text-blue-400 font-bold uppercase tracking-widest">Postgres Manager Key</span>
+                </div>
                 <button 
-                  className="text-xs text-red-500 hover:text-red-400 transition-colors"
+                  onClick={() => {
+                    const key = `@pm-gateway:${btoa(apiInfo.apiUrl + '::' + apiInfo.jwtSecret)}`;
+                    navigator.clipboard.writeText(key);
+                    toast.success('Manager Key copied!');
+                  }}
+                  className="p-1.5 hover:bg-gray-700 rounded-md transition-colors text-gray-400"
+                >
+                  <Copy size={14} />
+                </button>
+              </div>
+              <code className="text-blue-300 text-[11px] font-mono break-all line-clamp-1">
+                @pm-gateway:{btoa(apiInfo.apiUrl + '::' + apiInfo.jwtSecret).substring(0, 40)}...
+              </code>
+              <p className="mt-2 text-[10px] text-gray-500">
+                Use this key in Python, PHP, or Node.js to auto-connect to this gateway.
+              </p>
+            </div>
+
+            {/* Integration Snippets */}
+            <div className="mt-6">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3 block">Integration Snippets</label>
+              <div className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+                <div className="flex bg-gray-800/50 border-b border-gray-700">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-blue-400 border-r border-gray-700">PYTHON</div>
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-gray-500 border-r border-gray-700">PHP</div>
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-gray-500">NODE.JS</div>
+                </div>
+                <div className="p-4 overflow-x-auto">
+                  <pre className="text-[11px] text-gray-400 font-mono leading-relaxed">
+{`# Connect using requests
+import requests
+url = "${apiInfo.apiUrl}/your_table"
+headers = {"Authorization": "Bearer ${apiInfo.jwtSecret}"}
+response = requests.get(url, headers=headers)
+print(response.json())`}
+                  </pre>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end pt-4">
+                <button 
+                  className="text-xs text-red-500 hover:text-red-400 transition-colors flex items-center gap-1.5"
                   onClick={async () => {
                     await window.electron.ipcRenderer.invoke('db:stopApi', activeConnection.id);
                     setApiInfo(null);
                     toast('API Gateway stopped');
                   }}
                 >
+                  <EyeOff size={14} />
                   Stop Gateway
                 </button>
             </div>
@@ -157,23 +206,21 @@ const DeveloperSettings = () => {
         )}
       </div>
 
-      <div className="setting-group">
-        <label className="text-sm font-medium uppercase tracking-wider text-gray-500 block mb-3">Quick Guide</label>
-        <div className="bg-blue-500/5 border border-blue-500/10 rounded-lg p-4">
-          <ul className="text-xs text-gray-400 space-y-2">
-            <li className="flex gap-2">
-              <span className="text-blue-500 font-bold">•</span>
-              <span>PostgREST automatically maps your database schema to a RESTful API.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-blue-500 font-bold">•</span>
-              <span>GET /table_name fetches rows, POST inserts, PATCH updates.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-blue-500 font-bold">•</span>
-              <span>Use the JWT Secret to authorize requests from your own applications.</span>
-            </li>
-          </ul>
+      <div className="setting-group mt-10">
+        <label className="text-sm font-semibold uppercase tracking-wider text-gray-400 block mb-4">Quick Guide</label>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-gray-800/20 border border-gray-700/30 rounded-xl p-4">
+             <div className="text-blue-500 font-bold text-xs mb-1">01. Mapping</div>
+             <p className="text-[10px] text-gray-500 leading-normal">Automatic RESTful mapping for your database schema.</p>
+          </div>
+          <div className="bg-gray-800/20 border border-gray-700/30 rounded-xl p-4">
+             <div className="text-blue-500 font-bold text-xs mb-1">02. RESTful</div>
+             <p className="text-[10px] text-gray-500 leading-normal">Standard GET, POST, PATCH, and DELETE operations.</p>
+          </div>
+          <div className="bg-gray-800/20 border border-gray-700/30 rounded-xl p-4">
+             <div className="text-blue-500 font-bold text-xs mb-1">03. Secure</div>
+             <p className="text-[10px] text-gray-500 leading-normal">JWT based authentication for all external requests.</p>
+          </div>
         </div>
       </div>
     </div>

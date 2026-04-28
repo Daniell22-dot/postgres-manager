@@ -20,11 +20,12 @@ Postgres Manager is a high-performance desktop application built to streamline P
 
 ## Key Features
 
-- **Database Management**: Connect to and manage multiple PostgreSQL databases seamlessly.
-- **Advanced Query Editor**: Built-in Monaco editor for writing and executing SQL queries with syntax highlighting and autocompletion.
-- **Spatial Data Visualization**: Native integration with Leaflet and wkx for previewing PostGIS geometry and geography data types.
-- **Security & Auditing**: Features built-in encryption and audit tracking to ensure database connections and queries are secure.
-- **Modern User Interface**: Responsive and clean UI built with React, Vite, and Zustand for state management.
+- **Premium User Interface**: Stunning dark-mode design with customizable themes, accent colors, and typography controls.
+- **PostgREST API Gateway**: Instantly generate a RESTful API for any database connection with automatic JWT security.
+- **Security Guard**: Real-time scanning for hardcoded tokens and secrets to keep your credentials safe.
+- **Advanced Query Editor**: Monaco-powered SQL editor with professional autocomplete and syntax highlighting.
+- **Spatial Data Visualization**: Native integration with Leaflet for previewing PostGIS geometry data.
+- **Enterprise-ready Installer**: Professional Windows setup with EULA acceptance and custom branding.
 
 ## Tech Stack
 

@@ -43,16 +43,20 @@ class APIGateway {
     const port = 3000 + parseInt(connectionId, 10);
     
     const jwtSecret = this.generateJWTSecret();
-    const config = `
-      db-uri = "postgres://${connectionConfig.username}:${connectionConfig.password}@${connectionConfig.host}:${connectionConfig.port}/${connectionConfig.database}"
-      db-schema = "public"
-      db-anon-role = "anon"
-      db-pool = 10
-      server-host = "0.0.0.0"
-      server-port = ${port}
-      jwt-secret = "${jwtSecret}"
-      openapi-server-proxy-uri = "http://localhost:${port}"
-    `.split('\n').map(l => l.trim()).join('\n');
+    const encodedUser = encodeURIComponent(connectionConfig.username);
+    const encodedPass = encodeURIComponent(connectionConfig.password);
+    const uri = `postgres://${encodedUser}:${encodedPass}@${connectionConfig.host}:${connectionConfig.port}/${connectionConfig.database}`;
+    
+    const config = [
+      `db-uri = "${uri}"`,
+      `db-schema = "public"`,
+      `db-anon-role = "${connectionConfig.username}"`,
+      `db-pool = 10`,
+      `server-host = "127.0.0.1"`,
+      `server-port = ${port}`,
+      `jwt-secret = "${jwtSecret}"`,
+      `openapi-server-proxy-uri = "http://localhost:${port}"`
+    ].join('\n');
     
     fs.writeFileSync(configPath, config);
     
