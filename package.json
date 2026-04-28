@@ -62,16 +62,26 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "resources/icon.ico",
+      "icon": "resources/Postgres Manager Logo with Elephant Icon.png",
       "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerHeaderIcon": "resources/Postgres Manager Logo with Elephant Icon.png",
+      "uninstallerIcon": "resources/Postgres Manager Logo with Elephant Icon.png",
+      "include": "build/installer.nsh",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Postgres Manager"
     },
     "mac": {
       "target": "dmg",
-      "icon": "resources/icon.icns"
+      "icon": "resources/Postgres Manager Logo with Elephant Icon.png"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "resources/icon.png"
+      "icon": "resources/Postgres Manager Logo with Elephant Icon.png"
     }
   }
 }
