@@ -10,6 +10,13 @@ Fast PostgreSQL manager for 20+ databases.
 ## Overview
 
 Postgres Manager is a high-performance desktop application built to streamline PostgreSQL database administration. Designed for developers and database administrators, it offers a robust toolset for querying, managing, and visualizing PostgreSQL data, including native support for PostGIS spatial data.
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/5b7f05df-ab9e-42d5-9734-f806af720e5e" />
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/49e08c1c-56c4-49d0-9d1a-10b6008f90cf" />
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/c72cd1ce-497a-47d7-ae71-e50d1a112685" />
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/e202b6db-6cdd-40ff-b1be-823bbd0c0774" />
+
+
+
 
 ## Key Features
 
