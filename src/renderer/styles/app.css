@@ -15,8 +15,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   font-size: var(--font-size, 14px);
   font-style: var(--font-style, normal);
-  background: var(--background, #1e1e2e);
-  color: var(--text, #cdd6f4);
+  background: var(--background);
+  color: var(--text);
   overflow: hidden;
 }
 
@@ -183,8 +183,8 @@ body {
 
 /* Sidebar */
 .sidebar {
-  background: #181825;
-  border-right: 1px solid #313244;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -193,7 +193,7 @@ body {
 
 .sidebar-header {
   padding: 16px;
-  border-bottom: 1px solid #313244;
+  border-bottom: 1px solid var(--border);
 }
 
 .sidebar-brand {
@@ -215,14 +215,14 @@ body {
 .sidebar-header h2 {
   font-size: 18px;
   margin-bottom: 0;
-  color: #89b4fa;
+  color: var(--primary);
 }
 
 .new-connection-btn {
   width: 100%;
   padding: 8px 12px;
-  background: #89b4fa;
-  color: #1e1e2e;
+  background: var(--primary);
+  color: var(--background);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -256,7 +256,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #1e1e2e;
+  background: var(--background);
 }
 
 .welcome-screen {
@@ -267,7 +267,7 @@ body {
   height: 100%;
   padding: 40px;
   text-align: center;
-  color: #6c7086;
+  color: var(--textSecondary);
 }
 
 .welcome-screen h1 {
@@ -294,9 +294,9 @@ body {
 .feature {
   max-width: 250px;
   padding: 20px;
-  background: #181825;
+  background: var(--surface);
   border-radius: 12px;
-  border: 1px solid #313244;
+  border: 1px solid var(--border);
 }
 
 .feature h3 {
@@ -332,7 +332,7 @@ body {
 }
 
 .tree-node-content:hover {
-  background: #313244;
+  background: var(--surfaceHover);
 }
 
 .tree-node-content.selected {
@@ -378,8 +378,8 @@ body {
   left: 0;
   right: 0;
   height: 28px;
-  background: #181825;
-  border-top: 1px solid #313244;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -518,7 +518,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1e1e2e;
+  background: var(--background);
 }
 
 .editor-toolbar {
@@ -526,8 +526,8 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #181825;
-  border-bottom: 1px solid #313244;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
   gap: 8px;
 }
 
@@ -543,10 +543,10 @@ body {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: #313244;
+  background: var(--border);
   border: none;
   border-radius: 6px;
-  color: #cdd6f4;
+  color: var(--text);
   cursor: pointer;
   font-size: 13px;
   transition: all 0.2s;
@@ -570,7 +570,7 @@ body {
 .toolbar-divider {
   width: 1px;
   height: 24px;
-  background: #313244;
+  background: var(--border);
 }
 
 .connection-info {
@@ -613,7 +613,7 @@ body {
 .results-panel {
   position: relative;
   background: #11111b;
-  border-top: 1px solid #313244;
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -907,7 +907,7 @@ body {
 }
 
 .dialog {
-  background: #1e1e2e;
+  background: var(--background);
   border-radius: 12px;
   width: 500px;
   max-width: 90vw;
@@ -966,9 +966,9 @@ body {
   width: 100%;
   padding: 8px 12px;
   background: #11111b;
-  border: 1px solid #313244;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  color: #cdd6f4;
+  color: var(--text);
   font-size: 14px;
 }
 
@@ -1280,15 +1280,15 @@ body {
 .empty {
   padding: 20px;
   text-align: center;
-  color: #6c7086;
+  color: var(--textSecondary);
 }
 
 /* ================================
    Context Menu (TreeNode.jsx)
    ================================ */
 .context-menu {
-  background: #1e1e2e;
-  border: 1px solid #313244;
+  background: var(--background);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 4px;
   min-width: 200px;

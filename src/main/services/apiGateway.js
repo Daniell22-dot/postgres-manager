@@ -12,7 +12,7 @@ function getPostgrestBinaryPath() {
         path.join(process.resourcesPath, 'bin', process.platform === 'win32' ? 'windows' : process.platform),
       ]
     : [
-        path.join(__dirname, '../../../../resources/bin', process.platform === 'win32' ? 'windows' : process.platform),
+        path.join(__dirname, '../../../resources/bin', process.platform === 'win32' ? 'windows' : process.platform),
       ];
 
   for (const basePath of candidatePaths) {

@@ -84,7 +84,7 @@ const DeveloperSettings = () => {
                   setApiInfo(info);
                   toast.success('API Gateway started successfully');
                 } catch (err) {
-                  toast.error('Failed to start API Gateway');
+                  toast.error(`Failed to start API Gateway: ${err.message || err}`);
                 } finally {
                   setLoading(false);
                 }
