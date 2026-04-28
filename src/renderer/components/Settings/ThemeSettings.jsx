@@ -8,12 +8,14 @@ const ThemeSettings = () => {
     customColor,
     useCustomColor,
     fontSize,
+    fontStyle,
     reducedMotion,
     highContrast,
     setTheme,
     setCustomColor,
     resetToThemeDefault,
     setFontSize,
+    setFontStyle,
     toggleReducedMotion,
     toggleHighContrast
   } = useThemeStore();
@@ -34,11 +36,14 @@ const ThemeSettings = () => {
 
   return (
     <div className="settings-panel">
-      <h3>Theme Settings</h3>
+      <div className="panel-header mb-8">
+        <h3 className="text-2xl font-bold mb-2">Appearance</h3>
+        <p className="text-gray-400 text-sm">Customize how Postgres Manager looks on your screen.</p>
+      </div>
       
       {/* Theme Selection */}
       <div className="setting-group">
-        <label>Theme Mode</label>
+        <label className="text-sm font-semibold mb-4 block text-gray-400 uppercase tracking-wider">Theme Mode</label>
         <div className="theme-buttons">
           {themes.map(theme => (
             <button
@@ -55,7 +60,7 @@ const ThemeSettings = () => {
       
       {/* Custom Colors */}
       <div className="setting-group">
-        <label>Accent Color</label>
+        <label className="text-sm font-semibold mb-4 block text-gray-400 uppercase tracking-wider">Accent Color</label>
         <div className="color-presets">
           {colorPresets.map(preset => (
             <button
@@ -78,25 +83,47 @@ const ThemeSettings = () => {
         </div>
       </div>
       
-      {/* Font Size */}
-      <div className="setting-group">
-        <label>
-          <Type size={14} />
-          Font Size: {fontSize}px
-        </label>
-        <input
-          type="range"
-          min="12"
-          max="18"
-          value={fontSize}
-          onChange={(e) => setFontSize(parseInt(e.target.value))}
-          className="slider"
-        />
+      {/* Typography Section */}
+      <div className="grid grid-cols-2 gap-8 mb-8">
+        {/* Font Size */}
+        <div className="setting-group">
+          <label className="text-sm font-semibold mb-4 block text-gray-400 uppercase tracking-wider">
+            <Type size={14} />
+            Font Size: {fontSize}px
+          </label>
+          <input
+            type="range"
+            min="12"
+            max="18"
+            value={fontSize}
+            onChange={(e) => setFontSize(parseInt(e.target.value))}
+            className="slider"
+          />
+        </div>
+
+        {/* Font Style */}
+        <div className="setting-group">
+          <label className="text-sm font-semibold mb-4 block text-gray-400 uppercase tracking-wider">Font Style</label>
+          <div className="toggle-options">
+            <button
+              className={`toggle-btn ${fontStyle === 'normal' ? 'active' : ''}`}
+              onClick={() => setFontStyle('normal')}
+            >
+              Normal
+            </button>
+            <button
+              className={`toggle-btn ${fontStyle === 'italic' ? 'active' : ''}`}
+              onClick={() => setFontStyle('italic')}
+            >
+              <span style={{ fontStyle: 'italic' }}>Italic</span>
+            </button>
+          </div>
+        </div>
       </div>
       
       {/* Accessibility Options */}
       <div className="setting-group">
-        <label>Accessibility</label>
+        <label className="text-sm font-semibold mb-4 block text-gray-400 uppercase tracking-wider">Accessibility</label>
         <div className="toggle-options">
           <button
             className={`toggle-btn ${reducedMotion ? 'active' : ''}`}
@@ -114,8 +141,6 @@ const ThemeSettings = () => {
           </button>
         </div>
       </div>
-      
-      
     </div>
   );
 };

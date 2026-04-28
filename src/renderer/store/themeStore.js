@@ -90,6 +90,7 @@ export const useThemeStore = create(
       customColor: 'blue',
       useCustomColor: false,
       fontSize: 14,
+      fontStyle: 'normal',
       reducedMotion: false,
       highContrast: false,
       
@@ -126,6 +127,7 @@ export const useThemeStore = create(
         
         // Apply additional settings
         root.style.setProperty('--font-size', `${get().fontSize}px`);
+        root.style.setProperty('--font-style', get().fontStyle);
         
         if (get().highContrast) {
           root.style.setProperty('--contrast-boost', '1.2');
@@ -137,6 +139,11 @@ export const useThemeStore = create(
       setFontSize: (size) => {
         set({ fontSize: size });
         document.documentElement.style.setProperty('--font-size', `${size}px`);
+      },
+
+      setFontStyle: (style) => {
+        set({ fontStyle: style });
+        document.documentElement.style.setProperty('--font-style', style);
       },
       
       toggleReducedMotion: () => {

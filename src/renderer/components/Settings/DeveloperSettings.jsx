@@ -58,18 +58,18 @@ const DeveloperSettings = () => {
 
   return (
     <div className="settings-panel">
-      <div className="panel-header mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Terminal size={20} className="text-blue-500" />
-          <h3 className="text-xl font-bold">Developer Settings</h3>
+      <div className="panel-header mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <Terminal size={24} className="text-blue-500" />
+          <h3 className="text-2xl font-bold">Developer Settings</h3>
         </div>
         <p className="text-gray-400 text-sm">Manage your API gateway and developer credentials.</p>
       </div>
 
-      <div className="setting-group mb-8">
+      <div className="setting-group mb-10">
         <div className="flex items-center gap-2 mb-4">
           <Zap size={16} className="text-yellow-500" />
-          <label className="text-sm font-medium uppercase tracking-wider text-gray-500">PostgREST API Gateway</label>
+          <label className="text-sm font-semibold uppercase tracking-wider text-gray-400">PostgREST API Gateway</label>
         </div>
         
         {!apiInfo ? (

@@ -34,7 +34,7 @@ const SettingsDialog = ({ onClose }) => {
                 className={`settings-tab ${activeTab === tab.id ? 'active' : ''}`}
                 onClick={() => setActiveTab(tab.id)}
               >
-                <tab.icon size={16} />
+                <tab.icon size={18} />
                 <span>{tab.name}</span>
               </button>
             ))}
@@ -45,6 +45,11 @@ const SettingsDialog = ({ onClose }) => {
             {activeTab === 'developer' && <DeveloperSettings />}
             {/* Other tabs... */}
           </div>
+        </div>
+
+        <div className="settings-footer">
+          <button className="cancel-btn" onClick={onClose}>Cancel</button>
+          <button className="apply-btn" onClick={onClose}>Save & Close</button>
         </div>
       </div>
     </div>
