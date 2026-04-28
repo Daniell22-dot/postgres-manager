@@ -1,8 +1,7 @@
+import './polyfill';
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { Buffer } from 'buffer';
 
-window.Buffer = window.Buffer || Buffer;
 import App from './App';
 import './styles/app.css';
 
@@ -11,7 +10,7 @@ function SplashScreen() {
     <div className="app-splash">
       <div className="app-splash__content">
         <img
-          src="../../../resources/Postgres Manager Logo with Elephant Icon.png"
+          src="../../resources/Postgres Manager Logo with Elephant Icon.png"
           alt="Postgres Manager"
           className="app-splash__logo"
         />
