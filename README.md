@@ -14,8 +14,7 @@ Postgres Manager is a high-performance desktop application built to streamline P
 <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/49e08c1c-56c4-49d0-9d1a-10b6008f90cf" />
 <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/c72cd1ce-497a-47d7-ae71-e50d1a112685" />
 <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/e202b6db-6cdd-40ff-b1be-823bbd0c0774" />
-
-
+<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/0a94394c-424a-4689-8d91-5fd0555e7e45" />
 
 
 ## Key Features
@@ -25,6 +24,12 @@ Postgres Manager is a high-performance desktop application built to streamline P
 - **Security Guard**: Real-time scanning for hardcoded tokens and secrets to keep your credentials safe.
 - **Advanced Query Editor**: Monaco-powered SQL editor with professional autocomplete and syntax highlighting.
 - **Spatial Data Visualization**: Native integration with Leaflet for previewing PostGIS geometry data.
+  <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/dc126420-1270-4279-a629-a9bfc28bb8c8" />
+  <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/4a1003a4-13c3-4e7f-9afe-a8e7182dc369" />
+  <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/d29c650c-a22f-4f3f-8ec7-3d1f9453db36" />
+
+
+
 - **Enterprise-ready Installer**: Professional Windows setup with EULA acceptance and custom branding.
 
 ## Tech Stack
