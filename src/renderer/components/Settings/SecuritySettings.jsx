@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Lock, Key } from 'lucide-react';
+import { Shield, Lock, Key, ShieldCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const SecuritySettings = () => {
@@ -23,18 +23,15 @@ const SecuritySettings = () => {
         <div className="bg-gray-800/30 border-gray-700/50 rounded-xl p-5">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-green-500/10 rounded-lg">
-              <Lock size={20} className="text-green-500" />
+              <ShieldCheck size={20} className="text-green-500" />
             </div>
             <div className="flex-1">
-              <h4 className="text-sm font-semibold mb-1">Encrypted Password Storage</h4>
-              <p className="text-xs text-gray-500">Your connection passwords are encrypted using AES-256 before being saved to disk.</p>
+              <h4 className="text-sm font-semibold mb-1">Hardware-Linked Protection</h4>
+              <p className="text-xs text-gray-500">Your connection passwords are now encrypted using Electron SafeStorage, linked to your Windows user account for maximum security.</p>
             </div>
-            <button 
-              className="btn-premium"
-              onClick={handleChangeKey}
-            >
-              Change Master Key
-            </button>
+            <div className="px-3 py-1 bg-green-500/10 text-green-500 rounded-md text-[10px] font-bold uppercase tracking-widest border border-green-500/20">
+              Active & Locked
+            </div>
           </div>
         </div>
 

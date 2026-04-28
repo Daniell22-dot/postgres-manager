@@ -15,31 +15,62 @@ const store = new Store({
   }
 });
 
-// Deterministic encryption key — same across restarts so saved passwords can be decrypted
-const ENCRYPTION_KEY = crypto.scryptSync('postgres-manager-secret-v1', 'salt-pg-mgr', 32);
+const { safeStorage } = require('electron');
+
+// Old Deterministic encryption key for migration only
+const OLD_SECRET = 'postgres-manager-secret-v1';
+const OLD_KEY = crypto.scryptSync(OLD_SECRET, 'salt-pg-mgr', 32);
 const IV_LENGTH = 16;
 
 function encrypt(text) {
   if (!text) return '';
+  if (safeStorage.isEncryptionAvailable()) {
+    return safeStorage.encryptString(text).toString('hex');
+  }
+  
+  // Fallback for environments where safeStorage isn't available
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
+  const cipher = crypto.createCipheriv('aes-256-cbc', OLD_KEY, iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-  return `${iv.toString('hex')}:${encrypted}`;
+  return `legacy:${iv.toString('hex')}:${encrypted}`;
 }
 
 function decrypt(text) {
   if (!text) return '';
   try {
+    // 1. Try safeStorage (Modern)
+    if (safeStorage.isEncryptionAvailable()) {
+      try {
+        const buffer = Buffer.from(text, 'hex');
+        return safeStorage.decryptString(buffer);
+      } catch (e) {
+        // Not a safeStorage string, try legacy
+      }
+    }
+
+    // 2. Try Legacy/Migration
+    if (text.startsWith('legacy:')) {
+      const [_, ivHex, encryptedText] = text.split(':');
+      const iv = Buffer.from(ivHex, 'hex');
+      const decipher = crypto.createDecipheriv('aes-256-cbc', OLD_KEY, iv);
+      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    }
+
+    // 3. Try original manual format (First generation)
     const [ivHex, encryptedText] = text.split(':');
-    if (!ivHex || !encryptedText) return '';
-    const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
-    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
+    if (ivHex && encryptedText) {
+      const iv = Buffer.from(ivHex, 'hex');
+      const decipher = crypto.createDecipheriv('aes-256-cbc', OLD_KEY, iv);
+      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    }
+    
+    return '';
   } catch (err) {
-    // Password was encrypted with a different key (e.g. old random key) — return empty
     return '';
   }
 }
