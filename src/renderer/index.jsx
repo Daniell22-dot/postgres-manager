@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
+import { Buffer } from 'buffer';
+
+window.Buffer = window.Buffer || Buffer;
 import App from './App';
 import './styles/app.css';
 
