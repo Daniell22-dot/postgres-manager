@@ -21,6 +21,9 @@ export default defineConfig({
   },
   define: {
     global: 'globalThis',
+    'process.env': {},
+    'process.version': '""',
+    'process.browser': true
   },
   server: {
     port: 5173,

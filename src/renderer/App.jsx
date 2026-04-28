@@ -7,13 +7,19 @@ import ErrorBoundary from './components/Common/ErrorBoundary';
 import SettingsDialog from './components/Settings/SettingsDialog';
 import { useConnectionStore } from './store/connectionStore';
 import { useUIStore } from './store/uiStore';
+import { useThemeStore } from './store/themeStore';
 import './styles/app.css';
 
 function App() {
   const { activeConnection, activeDatabase, setActiveConnection, setActiveTable } = useConnectionStore();
   const { dialogs, closeDialog } = useUIStore();
+  const initTheme = useThemeStore((state) => state.initTheme);
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
+
+  useEffect(() => {
+    initTheme();
+  }, [initTheme]);
 
   const handleSelectDatabase = (connection, database) => {
     setActiveConnection(connection, database);

@@ -159,6 +159,20 @@ export const useThemeStore = create(
         if (hour >= startHour || hour < endHour) {
           get().setTheme('night');
         }
+      },
+      
+      initTheme: () => {
+        const state = get();
+        let themeColors = themes[state.currentTheme]?.colors || themes.dark.colors;
+        if (state.useCustomColor && customColorPresets[state.customColor]) {
+          const color = customColorPresets[state.customColor];
+          themeColors = {
+            ...themeColors,
+            primary: color.primary,
+            secondary: color.secondary
+          };
+        }
+        state.applyTheme(themeColors);
       }
     }),
     {
