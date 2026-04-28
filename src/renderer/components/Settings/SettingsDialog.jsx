@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { X, Palette, Shield, Key, Users, Bell, Database, Zap } from 'lucide-react';
 import ThemeSettings from './ThemeSettings';
+import DeveloperSettings from './DeveloperSettings';
+
 const SettingsDialog = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('theme');
   
   const tabs = [
     { id: 'theme', name: 'Appearance', icon: Palette },
+    { id: 'developer', name: 'Developer', icon: Zap },
     { id: 'security', name: 'Security', icon: Shield },
     { id: 'license', name: 'License', icon: Key },
     { id: 'team', name: 'Team', icon: Users },
     { id: 'notifications', name: 'Notifications', icon: Bell },
-    { id: 'database', name: 'Database', icon: Database },
-    { id: 'performance', name: 'Performance', icon: Zap }
+    { id: 'database', name: 'Database', icon: Database }
   ];
   
   return (
@@ -40,6 +42,7 @@ const SettingsDialog = ({ onClose }) => {
           
           <div className="settings-content">
             {activeTab === 'theme' && <ThemeSettings />}
+            {activeTab === 'developer' && <DeveloperSettings />}
             {/* Other tabs... */}
           </div>
         </div>

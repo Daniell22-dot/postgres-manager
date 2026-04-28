@@ -42,6 +42,7 @@ class APIGateway {
     const configPath = path.join(app.getPath('userData'), `postgrest_${connectionId}.conf`);
     const port = 3000 + parseInt(connectionId, 10);
     
+    const jwtSecret = this.generateJWTSecret();
     const config = `
       db-uri = "postgres://${connectionConfig.username}:${connectionConfig.password}@${connectionConfig.host}:${connectionConfig.port}/${connectionConfig.database}"
       db-schema = "public"
@@ -49,7 +50,7 @@ class APIGateway {
       db-pool = 10
       server-host = "0.0.0.0"
       server-port = ${port}
-      jwt-secret = "${this.generateJWTSecret()}"
+      jwt-secret = "${jwtSecret}"
       openapi-server-proxy-uri = "http://localhost:${port}"
     `.split('\n').map(l => l.trim()).join('\n');
     
@@ -85,7 +86,8 @@ class APIGateway {
     
     const urls = {
       apiUrl: `http://localhost:${port}`,
-      docsUrl: `http://localhost:${port}/`
+      docsUrl: `http://localhost:${port}/`,
+      jwtSecret: jwtSecret
     };
 
     this.runningInstances.set(connectionId, {
@@ -96,6 +98,11 @@ class APIGateway {
     });
     
     return urls;
+  }
+  
+  getInfo(connectionId) {
+    const instance = this.runningInstances.get(connectionId);
+    return instance ? instance.urls : null;
   }
   
   generateJWTSecret() {
