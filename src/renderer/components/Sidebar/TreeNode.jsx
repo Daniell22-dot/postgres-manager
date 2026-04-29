@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, ChevronDown, Loader } from 'lucide-react';
+import { ChevronRight, ChevronDown, Loader, Circle } from 'lucide-react';
 
 const TreeNode = ({ 
   id, 
@@ -9,6 +9,7 @@ const TreeNode = ({
   context, 
   isExpanded, 
   isLoading, 
+  status, 
   onToggle, 
   onSelect,
   onDelete,
@@ -16,6 +17,7 @@ const TreeNode = ({
   onViewData,
   onCreateDatabase,
   onStartApi,
+  onTestStatus,
   children 
 }) => {
   const [contextMenu, setContextMenu] = useState(null);
@@ -38,54 +40,64 @@ const TreeNode = ({
 
   const closeMenu = () => setContextMenu(null);
 
-  const menuItems = () => {
-    switch (type) {
-      case 'connection':
-        return [
-          { label: 'Expand / Connect', action: () => { onToggle?.(); closeMenu(); } },
-          { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
-          { label: 'Start REST API', action: () => { onStartApi?.(); closeMenu(); } },
-          { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
-          { label: 'Delete Connection', action: () => { onDelete?.(); closeMenu(); }, danger: true },
-        ];
-      case 'database':
-        return [
-          { label: 'Select Database', action: () => { onSelect?.(); closeMenu(); } },
-          { label: 'Expand', action: () => { onToggle?.(); closeMenu(); } },
-          { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
-          { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
-        ];
-      case 'schema':
-        return [
-          { label: 'Expand', action: () => { onToggle?.(); closeMenu(); } },
-          { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
-          { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
-        ];
-      case 'table':
-        return [
-          { label: 'View first 50 rows', action: () => { onViewData?.(50); closeMenu(); } },
-          { label: 'View first 100 rows', action: () => { onViewData?.(100); closeMenu(); } },
-          { label: 'View all rows', action: () => { onViewData?.(null); closeMenu(); } },
-          { label: 'View Columns', action: () => { onToggle?.(); closeMenu(); } },
-          { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
-          { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
-        ];
-      case 'extensions-group':
-      case 'schemas-group':
-      case 'tables-group':
-      case 'views-group':
-      case 'functions-group':
-      case 'procedures-group':
-      case 'sequences-group':
-        return [
-          { label: 'Expand', action: () => { onToggle?.(); closeMenu(); } },
-          { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
-        ];
-      default:
-        return [
-          { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
-        ];
+  const getStatusIcon = () => {
+    if (isLoading) return <Loader data-testid="loader" size={12} className="spinner" />;
+    
+    if (status) {
+      if (status.status === 'fine') return <Circle size={10} className="status-fine" />;
+      if (status.status === 'error') return <Circle size={10} className="status-error" />;
+      if (status.status === 'checking') return <Loader size={10} className="spinner" />;
     }
+    
+    return <Circle size={10} className="status-unknown" />;
+  };
+
+  const menuItems = () => {
+    const items = [];
+    
+    if (type === 'connection') {
+      items.push(
+        { label: 'Test Server Status', action: () => { onTestStatus?.(); closeMenu(); } },
+        { label: 'Expand / Connect', action: () => { onToggle?.(); closeMenu(); } },
+        { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
+        { label: 'Start REST API', action: () => { onStartApi?.(); closeMenu(); } },
+        { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+        { label: 'Delete Connection', action: () => { onDelete?.(); closeMenu(); }, danger: true }
+      );
+    } else if (type === 'database') {
+      items.push(
+        { label: 'Select Database', action: () => { onSelect?.(); closeMenu(); } },
+        { label: 'Expand', action: () => { onToggle?.(); closeMenu(); } },
+        { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
+        { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } }
+      );
+    } else if (type === 'schema') {
+      items.push(
+        { label: 'Expand', action: () => { onToggle?.(); closeMenu(); } },
+        { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
+        { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } }
+      );
+    } else if (type === 'table') {
+      items.push(
+        { label: 'View first 50 rows', action: () => { onViewData?.(50); closeMenu(); } },
+        { label: 'View first 100 rows', action: () => { onViewData?.(100); closeMenu(); } },
+        { label: 'View all rows', action: () => { onViewData?.(null); closeMenu(); } },
+        { label: 'View Columns', action: () => { onToggle?.(); closeMenu(); } },
+        { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
+        { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } }
+      );
+    } else if (['extensions-group','schemas-group','tables-group','views-group','functions-group','procedures-group','sequences-group'].includes(type)) {
+      items.push(
+        { label: 'Expand', action: () => { onToggle?.(); closeMenu(); } },
+        { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } }
+      );
+    } else {
+      items.push(
+        { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } }
+      );
+    }
+    
+    return items;
   };
 
   return (
@@ -96,11 +108,16 @@ const TreeNode = ({
       >
         <span className="tree-icon">
           {isLoading ? (
-<Loader data-testid="loader" size={14} className="spinner" />
+            <Loader data-testid="loader" size={14} className="spinner" />
           ) : (
             isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
           )}
         </span>
+        {type === 'connection' && (
+          <span className="tree-status-icon">
+            {getStatusIcon()}
+          </span>
+        )}
         {icon && <span className="tree-icon">{icon}</span>}
         <span className="tree-label">{label}</span>
         {type === 'table' && context?.estimatedRows && (
@@ -153,3 +170,4 @@ const TreeNode = ({
 };
 
 export default TreeNode;
+

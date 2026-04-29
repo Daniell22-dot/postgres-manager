@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Database, Server, Key, Shield } from 'lucide-react';
 
 const ConnectionDialog = ({ onClose, onSave, connection = null }) => {
   const [formData, setFormData] = useState({
     name: connection?.name || '',
+    type: connection?.type || 'postgres',
     host: connection?.host || 'localhost',
     port: connection?.port || 5432,
     database: connection?.database || 'postgres',
@@ -17,21 +18,45 @@ const ConnectionDialog = ({ onClose, onSave, connection = null }) => {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
   
+  // Defaults per type
+  const defaults = {
+    postgres: { port: 5432, database: 'postgres', username: 'postgres', ssl_mode: 'prefer' },
+    mysql: { port: 3306, database: 'mysql', username: 'root', ssl_mode: 'disable' }
+  };
+  
+  useEffect(() => {
+    const d = defaults[formData.type] || defaults.postgres;
+    setFormData(prev => ({
+      ...prev,
+      port: d.port,
+      database: d.database,
+      username: d.username,
+      ssl_mode: d.ssl_mode
+    }));
+  }, [formData.type]);
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSave(formData);
+    // Don't save pw for local default servers
+    const saveData = formData.host === 'localhost' && formData.username === (formData.type === 'mysql' ? 'root' : 'postgres')
+      ? { ...formData, password: '' }
+      : formData;
+    await onSave(saveData);
   };
   
   const testConnection = async () => {
     setTesting(true);
     setTestResult(null);
     
-    const result = await window.electronAPI.testConnection(formData);
-    
-    if (result.success) {
-      setTestResult({ success: true, message: `Connected! PostgreSQL ${result.version}` });
-    } else {
-      setTestResult({ success: false, message: result.error });
+    try {
+      const result = await window.electronAPI.testConnection(formData);
+      if (result.success) {
+        setTestResult({ success: true, message: `Connected! ${formData.type.toUpperCase()} ${result.version || result.serverVersion}` });
+      } else {
+        setTestResult({ success: false, message: result.error });
+      }
+    } catch (error) {
+      setTestResult({ success: false, message: error.message });
     }
     
     setTesting(false);
@@ -48,6 +73,20 @@ const ConnectionDialog = ({ onClose, onSave, connection = null }) => {
         </div>
         
         <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>
+              <Database size={14} />
+              Server Type *
+            </label>
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+            >
+              <option value="postgres">PostgreSQL</option>
+              <option value="mysql">MySQL</option>
+            </select>
+          </div>
+
           <div className="form-group">
             <label>
               <Database size={14} />
@@ -92,7 +131,7 @@ const ConnectionDialog = ({ onClose, onSave, connection = null }) => {
               type="text"
               value={formData.database}
               onChange={(e) => setFormData({ ...formData, database: e.target.value })}
-              placeholder="postgres"
+              placeholder={formData.type === 'mysql' ? 'mysql' : 'postgres'}
             />
           </div>
           
@@ -110,12 +149,13 @@ const ConnectionDialog = ({ onClose, onSave, connection = null }) => {
             <div className="form-group">
               <label>
                 <Key size={14} />
-                Password
+                Password (optional for local)
               </label>
               <input
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Leave empty for local servers"
               />
             </div>
           </div>
@@ -168,10 +208,9 @@ const ConnectionDialog = ({ onClose, onSave, connection = null }) => {
           </div>
         </form>
       </div>
-      
-
     </div>
   );
 };
 
 export default ConnectionDialog;
+
