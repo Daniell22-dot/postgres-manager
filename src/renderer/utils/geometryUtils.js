@@ -6,12 +6,17 @@ import { Buffer } from 'buffer';
  * EWKB starts with '01' (little endian) or '00' (big endian) and contains hex characters.
  */
 export const isGeometryValue = (value) => {
+  if (value instanceof Buffer) return true;
   if (typeof value !== 'string') return false;
-  // Basic fast check: min length for a point is 42 hex chars. Must be only hex.
-  if (value.length < 42 || !/^[0-9a-fA-F]+$/.test(value)) return false;
+  
+  // Handle Postgres hex format prefix
+  const cleanHex = value.startsWith('\\x') ? value.substring(2) : value;
+  
+  // Basic fast check: contains only hex characters.
+  if (cleanHex.length < 20 || !/^[0-9a-fA-F]+$/.test(cleanHex)) return false;
   
   // Endianness byte check (00 or 01)
-  const endian = value.substring(0, 2);
+  const endian = cleanHex.substring(0, 2);
   if (endian !== '00' && endian !== '01') return false;
 
   return true;
@@ -48,9 +53,16 @@ export const detectGeometryColumns = (fields, rows) => {
 /**
  * Parses a WKB/EWKB hex string into a GeoJSON geometry object.
  */
-export const parseWKBHex = (hexString) => {
+export const parseWKBHex = (value) => {
   try {
-    const buffer = Buffer.from(hexString, 'hex');
+    let buffer;
+    if (value instanceof Buffer) {
+      buffer = value;
+    } else {
+      const cleanHex = value.startsWith('\\x') ? value.substring(2) : value;
+      buffer = Buffer.from(cleanHex, 'hex');
+    }
+    
     const geometry = wkx.Geometry.parse(buffer);
     return geometry.toGeoJSON();
   } catch (err) {

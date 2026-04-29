@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Layers } from 'lucide-react';
+import { Layers, Maximize2 } from 'lucide-react';
 import { buildFeatureCollection } from '../../utils/geometryUtils';
 
 // Fix Leaflet's default icon path issues with bundlers
@@ -24,7 +24,8 @@ const GeometryViewer = ({ results, geomColumn }) => {
       mapInstance.current = L.map(mapRef.current, {
         center: [0, 0],
         zoom: 2,
-        layers: [] // Base layers added via control
+        layers: [],
+        attributionControl: true
       });
 
       // Base maps
@@ -32,25 +33,33 @@ const GeometryViewer = ({ results, geomColumn }) => {
         attribution: '© OpenStreetMap contributors'
       });
 
-      const googleSat = L.tileLayer('http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}', {
+      const googleSat = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
         attribution: '© Google',
         maxZoom: 20,
       });
 
-      const openTopo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)',
-        maxZoom: 17
+      const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap contributors © CARTO',
+        subdomains: 'abcd',
+        maxZoom: 20
       });
 
       // Default base layer
-      osm.addTo(mapInstance.current);
+      dark.addTo(mapInstance.current);
 
       // Add layer control
       L.control.layers({
+        "Dark Mode (Default)": dark,
         "OpenStreetMap": osm,
         "Google Satellite": googleSat,
-        "Open Topography": openTopo
-      }).addTo(mapInstance.current);
+      }, null, { position: 'bottomright' }).addTo(mapInstance.current);
+
+      // Fix for the "white map" issue — force a resize check after a short delay
+      setTimeout(() => {
+        if (mapInstance.current) {
+          mapInstance.current.invalidateSize();
+        }
+      }, 100);
     }
 
     return () => {
@@ -135,10 +144,21 @@ const GeometryViewer = ({ results, geomColumn }) => {
 
     // Fit map to data bounds
     if (geoJsonLayer.current.getBounds().isValid()) {
-      mapInstance.current.fitBounds(geoJsonLayer.current.getBounds(), { padding: [20, 20] });
+      mapInstance.current.fitBounds(geoJsonLayer.current.getBounds(), { padding: [40, 40] });
     }
 
+    // Ensure map displays correctly (fixes "white map" issue)
+    setTimeout(() => {
+      if (mapInstance.current) mapInstance.current.invalidateSize();
+    }, 100);
+
   }, [results, geomColumn]);
+
+  const handleRecenter = () => {
+    if (mapInstance.current && geoJsonLayer.current && geoJsonLayer.current.getBounds().isValid()) {
+      mapInstance.current.fitBounds(geoJsonLayer.current.getBounds(), { padding: [40, 40] });
+    }
+  };
 
   return (
     <div className="geometry-viewer-container">
@@ -147,6 +167,13 @@ const GeometryViewer = ({ results, geomColumn }) => {
           <Layers size={14} />
           <span>{featureCount.toLocaleString()} geometries mapped</span>
         </div>
+        <button 
+          className="btn-premium flex items-center gap-2 py-1 px-3 text-[11px] font-bold"
+          onClick={handleRecenter}
+        >
+          <Maximize2 size={12} className="text-blue-400" />
+          <span>RECENTER VIEW</span>
+        </button>
       </div>
       <div className="geometry-map" ref={mapRef}></div>
     </div>
