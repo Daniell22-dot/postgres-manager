@@ -22,6 +22,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^0.309.0",
     "monaco-editor": "^0.45.0",
+    "mysql2": "^3.22.3",
     "pg": "^8.11.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -66,21 +67,8 @@
       "node_modules/**/*"
     ],
     "win": {
-      "target": "nsis",
-      "icon": "resources/Postgres Manager Logo with Elephant Icon.png",
-      "forceCodeSigning": false
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "installerHeaderIcon": "resources/Postgres Manager Logo with Elephant Icon.png",
-      "uninstallerIcon": "resources/Postgres Manager Logo with Elephant Icon.png",
-      "installerIcon": "resources/Postgres Manager Logo with Elephant Icon.png",
-      "include": "build/installer.nsh",
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Postgres Manager",
-      "uninstallDisplayName": "Postgres Manager"
+      "target": "portable",
+      "icon": "resources/Postgres Manager Logo with Elephant Icon.png"
     },
     "mac": {
       "target": "dmg",

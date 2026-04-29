@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ConnectionDialog from './ConnectionDialog';
 import CreateDatabaseDialog from './CreateDatabaseDialog';
 import TreeNode from './TreeNode';
-import { ChevronRight, ChevronDown, Database, FolderOpen, Table, Key, Plus } from 'lucide-react';
+import { Database, FolderOpen, Table, Key, Zap, Eye, Cog, Hash, Play } from 'lucide-react';
 import { useQueryStore } from '../../store/queryStore';
 
 const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
@@ -51,16 +51,57 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
             console.log('Loading databases for connection:', nodeContext);
             data = await window.electronAPI.getDatabases(nodeContext.id);
             break;
-          case 'database':
+          case 'extensions-group':
+            console.log('Loading extensions for database:', nodeContext);
+            data = await window.electronAPI.getExtensions(nodeContext.connectionId, nodeContext.database);
+            break;
+          case 'schemas-group':
             console.log('Loading schemas for database:', nodeContext);
-            data = await window.electronAPI.getSchemas(nodeContext.connectionId, nodeContext.name);
+            data = await window.electronAPI.getSchemas(nodeContext.connectionId, nodeContext.database);
             break;
           case 'schema':
+            console.log('Loading schema objects for:', nodeContext);
+            // For schema, we don't load anything here - we load tables, views, etc separately
+            data = [];
+            break;
+          case 'tables-group':
             console.log('Loading tables for schema:', nodeContext);
             data = await window.electronAPI.getTables(
               nodeContext.connectionId, 
               nodeContext.database, 
-              nodeContext.name
+              nodeContext.schema
+            );
+            break;
+          case 'views-group':
+            console.log('Loading views for schema:', nodeContext);
+            data = await window.electronAPI.getViews(
+              nodeContext.connectionId,
+              nodeContext.database,
+              nodeContext.schema
+            );
+            break;
+          case 'functions-group':
+            console.log('Loading functions for schema:', nodeContext);
+            data = await window.electronAPI.getFunctions(
+              nodeContext.connectionId,
+              nodeContext.database,
+              nodeContext.schema
+            );
+            break;
+          case 'procedures-group':
+            console.log('Loading procedures for schema:', nodeContext);
+            data = await window.electronAPI.getProcedures(
+              nodeContext.connectionId,
+              nodeContext.database,
+              nodeContext.schema
+            );
+            break;
+          case 'sequences-group':
+            console.log('Loading sequences for schema:', nodeContext);
+            data = await window.electronAPI.getSequences(
+              nodeContext.connectionId,
+              nodeContext.database,
+              nodeContext.schema
             );
             break;
           case 'table':
@@ -138,6 +179,253 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
     }
   };
 
+  // Create group nodes (grouping UI elements)
+  const createGroupNode = (parentId, groupType, label, icon, context) => {
+    const nodeId = `${parentId}-${groupType}`;
+    return (
+      <TreeNode
+        key={nodeId}
+        id={nodeId}
+        label={label}
+        icon={icon}
+        type={groupType}
+        context={context}
+        isExpanded={expandedNodes.has(nodeId)}
+        isLoading={loadingNodes.has(nodeId)}
+        onToggle={() => toggleNode(nodeId, groupType, context)}
+        onRefresh={() => handleRefresh(nodeId, groupType, context)}
+      >
+        {renderChildren(nodeId, groupType, context)}
+      </TreeNode>
+    );
+  };
+
+  const renderChildren = (parentId, childType, context) => {
+    const data = nodeData.get(parentId) || [];
+    const isLoading = loadingNodes.has(parentId);
+    
+    if (isLoading) {
+      return <div className="loading-placeholder">Loading...</div>;
+    }
+    
+    return data.map((item, index) => {
+      let nodeId = `${parentId}-${item.name || index}`;
+      let icon;
+      let childContext = { ...context };
+      let nextChildType = null;
+      
+      switch (childType) {
+        case 'connection':
+          icon = <Database size={14} />;
+          childContext = { 
+            id: item.name,
+            connectionId: context.id,
+            name: item.name, 
+            database: item.name,
+          };
+          // Return a custom structure for databases with groups
+          return renderDatabaseNode(context.id, item.name, item);
+          
+        case 'extensions-group':
+        case 'extension':
+          icon = <Zap size={14} />;
+          return (
+            <div key={nodeId} className="tree-node-leaf">
+              <div className="tree-node-content" style={{ paddingLeft: '40px' }}>
+                {icon}
+                <span className="tree-label">{item.name}</span>
+              </div>
+            </div>
+          );
+          
+        case 'schemas-group':
+        case 'schema':
+          icon = <FolderOpen size={14} />;
+          childContext = {
+            connectionId: context.connectionId,
+            database: context.database,
+            name: item.name,
+            schema: item.name
+          };
+          return renderSchemaNode(parentId, item.name, childContext);
+          
+        case 'tables-group':
+        case 'table':
+          icon = <Table size={14} />;
+          childContext = {
+            connectionId: context.connectionId,
+            database: context.database,
+            schema: context.schema,
+            name: item.name,
+            estimatedRows: item.estimated_rows,
+            comment: item.comment
+          };
+          nextChildType = 'column';
+          break;
+          
+        case 'views-group':
+        case 'view':
+          icon = <Eye size={14} />;
+          childContext = {
+            connectionId: context.connectionId,
+            database: context.database,
+            schema: context.schema,
+            name: item.name
+          };
+          return (
+            <div key={nodeId} className="tree-node-leaf">
+              <div className="tree-node-content" style={{ paddingLeft: '64px' }}>
+                {icon}
+                <span className="tree-label">{item.name}</span>
+              </div>
+            </div>
+          );
+          
+        case 'functions-group':
+        case 'function':
+          icon = <Cog size={14} />;
+          return (
+            <div key={nodeId} className="tree-node-leaf">
+              <div className="tree-node-content" style={{ paddingLeft: '64px' }}>
+                {icon}
+                <span className="tree-label">{item.name}</span>
+              </div>
+            </div>
+          );
+          
+        case 'procedures-group':
+        case 'procedure':
+          icon = <Play size={14} />;
+          return (
+            <div key={nodeId} className="tree-node-leaf">
+              <div className="tree-node-content" style={{ paddingLeft: '64px' }}>
+                {icon}
+                <span className="tree-label">{item.name}</span>
+              </div>
+            </div>
+          );
+          
+        case 'sequences-group':
+        case 'sequence':
+          icon = <Hash size={14} />;
+          return (
+            <div key={nodeId} className="tree-node-leaf">
+              <div className="tree-node-content" style={{ paddingLeft: '64px' }}>
+                {icon}
+                <span className="tree-label">{item.name}</span>
+              </div>
+            </div>
+          );
+          
+        case 'column':
+          icon = <Key size={12} />;
+          return (
+            <div key={nodeId} className="tree-node-leaf">
+              <div className="tree-node-content" style={{ paddingLeft: '80px' }}>
+                {icon}
+                <span className="tree-label">
+                  {item.name}
+                  <span className="column-type"> ({item.type})</span>
+                </span>
+              </div>
+            </div>
+          );
+        default:
+          icon = null;
+      }
+      
+      return (
+        <TreeNode
+          key={nodeId}
+          id={nodeId}
+          label={item.name}
+          icon={icon}
+          type={childType}
+          context={childContext}
+          isExpanded={expandedNodes.has(nodeId)}
+          isLoading={loadingNodes.has(nodeId)}
+          onToggle={() => toggleNode(nodeId, childType, childContext)}
+          onRefresh={() => handleRefresh(nodeId, childType, childContext)}
+          onViewData={(limit) => handleViewData(childContext, limit)}
+          onSelect={() => {
+            if (childType === 'table') {
+              const connection = connections.find(c => c.id === context.connectionId);
+              handleSelectTable(connection, context.database, context.schema, item.name);
+            }
+          }}
+        >
+          {nextChildType && renderChildren(nodeId, nextChildType, childContext)}
+        </TreeNode>
+      );
+    });
+  };
+
+  // Render a database node with Extensions and Schemas groups
+  const renderDatabaseNode = (connectionId, databaseName, database) => {
+    const nodeId = `db-${connectionId}-${databaseName}`;
+    const dbContext = {
+      connectionId,
+      id: connectionId,
+      name: databaseName,
+      database: databaseName
+    };
+    
+    return (
+      <TreeNode
+        key={nodeId}
+        id={nodeId}
+        label={databaseName}
+        icon={<Database size={14} />}
+        type="database"
+        context={dbContext}
+        isExpanded={expandedNodes.has(nodeId)}
+        isLoading={loadingNodes.has(nodeId)}
+        onToggle={() => toggleNode(nodeId, 'database', dbContext)}
+        onRefresh={() => handleRefresh(nodeId, 'database', dbContext)}
+        onSelect={() => {
+          const connection = connections.find(c => c.id === connectionId);
+          handleSelectDatabase(connection, databaseName);
+        }}
+      >
+        {expandedNodes.has(nodeId) && (
+          <>
+            {createGroupNode(nodeId, 'extensions-group', 'Extensions', <Zap size={14} />, dbContext)}
+            {createGroupNode(nodeId, 'schemas-group', 'Schemas', <FolderOpen size={14} />, dbContext)}
+          </>
+        )}
+      </TreeNode>
+    );
+  };
+
+  // Render a schema node with Tables, Views, Functions, etc groups
+  const renderSchemaNode = (parentId, schemaName, schemaContext) => {
+    const nodeId = `schema-${parentId}-${schemaName}`;
+    
+    return (
+      <TreeNode
+        key={nodeId}
+        id={nodeId}
+        label={schemaName}
+        icon={<FolderOpen size={14} />}
+        type="schema"
+        context={schemaContext}
+        isExpanded={expandedNodes.has(nodeId)}
+        isLoading={loadingNodes.has(nodeId)}
+        onToggle={() => toggleNode(nodeId, 'schema', schemaContext)}
+      >
+        {expandedNodes.has(nodeId) && (
+          <>
+            {createGroupNode(nodeId, 'tables-group', 'Tables', <Table size={14} />, schemaContext)}
+            {createGroupNode(nodeId, 'views-group', 'Views', <Eye size={14} />, schemaContext)}
+            {createGroupNode(nodeId, 'functions-group', 'Functions', <Cog size={14} />, schemaContext)}
+            {createGroupNode(nodeId, 'procedures-group', 'Procedures', <Play size={14} />, schemaContext)}
+            {createGroupNode(nodeId, 'sequences-group', 'Sequences', <Hash size={14} />, schemaContext)}
+          </>
+        )}
+      </TreeNode>
+    );
+  };
+
   const renderTree = () => {
     return connections.map(connection => (
       <TreeNode
@@ -159,104 +447,9 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
           setShowCreateDatabaseDialog(true);
         }}
       >
-        {renderChildren(`conn-${connection.id}`, 'database', { connectionId: connection.id, connection: connection })}
+        {renderChildren(`conn-${connection.id}`, 'connection', { id: connection.id, connectionId: connection.id })}
       </TreeNode>
     ));
-  };
-
-  const renderChildren = (parentId, childType, context) => {
-    const data = nodeData.get(parentId) || [];
-    const isLoading = loadingNodes.has(parentId);
-    
-    if (isLoading) {
-      return <div className="loading-placeholder">Loading...</div>;
-    }
-    
-    return data.map((item, index) => {
-      let nodeId = `${parentId}-${childType}-${item.name || item.table_name || index}`;
-      let icon;
-      let childContext = { ...context };
-      
-      switch (childType) {
-        case 'database':
-          icon = <Database size={14} />;
-          childContext = { 
-            ...context, 
-            name: item.name, 
-            database: item.name,
-            connectionId: context.id || context.connectionId 
-          };
-          break;
-        case 'schema':
-          icon = <FolderOpen size={14} />;
-          childContext = { 
-            ...context, 
-            name: item.name, 
-            schema: item.name,
-            database: context.database || context.name,
-            connectionId: context.connectionId || context.id 
-          };
-          break;
-        case 'table':
-          icon = <Table size={14} />;
-          childContext = {
-            ...context,
-            name: item.name,
-            schema: context.schema,
-            database: context.database,
-            estimatedRows: item.estimated_rows,
-            comment: item.comment
-          };
-          break;
-        case 'column':
-          icon = <Key size={12} />;
-          return (
-            <div key={nodeId} className="tree-node-leaf">
-              <div className="tree-node-content" style={{ paddingLeft: '24px' }}>
-                {icon}
-                <span className="tree-label">
-                  {item.name}
-                  <span className="column-type"> ({item.type})</span>
-                </span>
-              </div>
-            </div>
-          );
-        default:
-          icon = null;
-      }
-      
-      return (
-        <TreeNode
-          key={nodeId}
-          id={nodeId}
-          label={item.name || item.table_name}
-          icon={icon}
-          type={childType}
-          context={childContext}
-          isExpanded={expandedNodes.has(nodeId)}
-          isLoading={loadingNodes.has(nodeId)}
-          onToggle={() => toggleNode(nodeId, childType, childContext)}
-          onRefresh={() => handleRefresh(nodeId, childType, childContext)}
-          onViewData={(limit) => handleViewData(childContext, limit)}
-          onSelect={() => {
-            if (childType === 'database') {
-              const connection = connections.find(c => c.id === context.connectionId);
-              handleSelectDatabase(connection, item.name);
-            } else if (childType === 'table') {
-              handleSelectTable(context.connection, context.database, context.schema, item.name);
-            }
-          }}
-        >
-          {renderChildren(
-            nodeId, 
-            childType === 'database' ? 'schema' : 
-            childType === 'schema' ? 'table' : 
-            childType === 'table' ? 'column' : null,
-            childContext
-          )}
-        </TreeNode>
-      );
-    });
   };
 
   return (

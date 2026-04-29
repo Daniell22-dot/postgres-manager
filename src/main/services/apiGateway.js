@@ -8,11 +8,11 @@ function getPostgrestBinaryPath() {
   const executableName = process.platform === 'win32' ? 'postgrest.exe' : 'postgrest';
   const candidatePaths = app.isPackaged
     ? [
-        path.join(process.resourcesPath, 'resources', 'bin', process.platform === 'win32' ? 'windows' : process.platform),
-        path.join(process.resourcesPath, 'bin', process.platform === 'win32' ? 'windows' : process.platform),
+        path.join(process.resourcesPath, 'resources', 'binaries', 'postgrest'),
+        path.join(process.resourcesPath, 'binaries', 'postgrest'),
       ]
     : [
-        path.join(__dirname, '../../../resources/bin', process.platform === 'win32' ? 'windows' : process.platform),
+        path.join(__dirname, '../../../resources/binaries/postgrest'),
       ];
 
   for (const basePath of candidatePaths) {

@@ -51,13 +51,13 @@ const TreeNode = ({
       case 'database':
         return [
           { label: 'Select Database', action: () => { onSelect?.(); closeMenu(); } },
-          { label: 'Expand Schemas', action: () => { onToggle?.(); closeMenu(); } },
+          { label: 'Expand', action: () => { onToggle?.(); closeMenu(); } },
           { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
           { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
         ];
       case 'schema':
         return [
-          { label: 'Expand Tables', action: () => { onToggle?.(); closeMenu(); } },
+          { label: 'Expand', action: () => { onToggle?.(); closeMenu(); } },
           { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
           { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
         ];
@@ -69,6 +69,17 @@ const TreeNode = ({
           { label: 'View Columns', action: () => { onToggle?.(); closeMenu(); } },
           { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
           { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+        ];
+      case 'extensions-group':
+      case 'schemas-group':
+      case 'tables-group':
+      case 'views-group':
+      case 'functions-group':
+      case 'procedures-group':
+      case 'sequences-group':
+        return [
+          { label: 'Expand', action: () => { onToggle?.(); closeMenu(); } },
+          { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
         ];
       default:
         return [

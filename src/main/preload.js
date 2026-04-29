@@ -20,6 +20,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSchemas: (connectionId, database) => ipcRenderer.invoke('db:getSchemas', connectionId, database),
   getTables: (connectionId, database, schema) => ipcRenderer.invoke('db:getTables', connectionId, database, schema),
   getColumns: (connectionId, database, schema, table) => ipcRenderer.invoke('db:getColumns', connectionId, database, schema, table),
+  getExtensions: (connectionId, database) => ipcRenderer.invoke('db:getExtensions', connectionId, database),
+  getViews: (connectionId, database, schema) => ipcRenderer.invoke('db:getViews', connectionId, database, schema),
+  getFunctions: (connectionId, database, schema) => ipcRenderer.invoke('db:getFunctions', connectionId, database, schema),
+  getProcedures: (connectionId, database, schema) => ipcRenderer.invoke('db:getProcedures', connectionId, database, schema),
+  getSequences: (connectionId, database, schema) => ipcRenderer.invoke('db:getSequences', connectionId, database, schema),
   
   // Queries
   executeQuery: (connectionId, database, sql, params) => 
