@@ -47,6 +47,7 @@
   "build": {
     "appId": "com.postgres.manager",
     "productName": "PostgresManager",
+    "copyright": "Copyright © 2026 Daniel Manyasa",
     "directories": {
       "output": "release"
     },
@@ -67,17 +68,19 @@
     "win": {
       "target": "nsis",
       "icon": "resources/Postgres Manager Logo with Elephant Icon.png",
-      "verifyUpdateCodeSignature": false
+      "forceCodeSigning": false
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "installerHeaderIcon": "resources/Postgres Manager Logo with Elephant Icon.png",
       "uninstallerIcon": "resources/Postgres Manager Logo with Elephant Icon.png",
+      "installerIcon": "resources/Postgres Manager Logo with Elephant Icon.png",
       "include": "build/installer.nsh",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Postgres Manager"
+      "shortcutName": "Postgres Manager",
+      "uninstallDisplayName": "Postgres Manager"
     },
     "mac": {
       "target": "dmg",

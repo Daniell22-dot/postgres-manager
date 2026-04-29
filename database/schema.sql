@@ -6,7 +6,7 @@ CREATE TABLE connections (
   port INTEGER DEFAULT 5432,
   database TEXT NOT NULL,
   username TEXT NOT NULL,
-  encrypted_password TEXT,  -- You'll encrypt this
+  encrypted_password TEXT,  
   ssl_mode TEXT DEFAULT 'prefer',
   color TEXT,  -- For visual organization
   group_name TEXT,  -- Group related databases
