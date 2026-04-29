@@ -2,6 +2,16 @@ import { useState, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 
 export const useDatabaseConnection = () => {
+  const pgCommand = useCallback(async (connectionId, database, cmd) => {
+    try {
+      const result = await window.electronAPI.pgCommand(connectionId, database, cmd);
+      return result;
+    } catch (error) {
+      toast.error(`PG command failed: ${error.message}`);
+      return { error: error.message };
+    }
+  }, []);
+
   const [isExecuting, setIsExecuting] = useState(false);
   const [currentQuery, setCurrentQuery] = useState(null);
   const [results, setResults] = useState(null);

@@ -4,9 +4,7 @@ import { toast } from 'react-hot-toast';
 
 const SecuritySettings = () => {
   const handleChangeKey = () => {
-    toast('Master Key change functionality will be available in the next security update.', {
-      icon: '🛡️',
-    });
+    toast('Master Key change functionality will be available in the next security update.');
   };
 
   return (

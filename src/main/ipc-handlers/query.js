@@ -40,7 +40,6 @@ function setupQueryHandlers(ipcMain) {
         duration,
         command: result.command
       };
-      
     } catch (error) {
       const duration = Date.now() - startTime;
       await saveQueryHistory(connectionId, sql, duration, 0, error.message);
@@ -54,7 +53,7 @@ function setupQueryHandlers(ipcMain) {
       if (client) client.release();
     }
   });
-  
+
   // Get query history
   ipcMain.handle('db:getQueryHistory', async (event, connectionId, limit = 100) => {
     const history = store.get('queryHistory', []);
@@ -65,7 +64,7 @@ function setupQueryHandlers(ipcMain) {
     
     return filtered;
   });
-  
+
   // Export to CSV
   ipcMain.handle('db:exportToCSV', async (event, data, filename) => {
     const { dialog } = require('electron');
@@ -98,8 +97,38 @@ function setupQueryHandlers(ipcMain) {
       csvRows.push(values.join(','));
     }
     
-    fs.writeFileSync(filePath, csvRows.join('\n'));
+    fs.writeFileSync(filePath, csvRows.join('\\n'));
     return { success: true, filePath };
+  });
+
+  // PG Shell Commands
+  ipcMain.handle('db:pgCommand', async (event, connectionId, database, cmd) => {
+    const connection = await getConnectionById(connectionId);
+    if (!connection) throw new Error('Connection not found');
+
+    let binary = 'psql';
+    let args = ['-c', cmd];
+    if (cmd.startsWith('pg_dump')) {
+      binary = 'pg_dump';
+      args = ['--no-password', '-h', connection.host, '-p', connection.port.toString(), '-U', connection.username, '-d', database, ...cmd.split(' ').slice(1)];
+    } else if (cmd.startsWith('pg_restore')) {
+      binary = 'pg_restore';
+      args = ['--no-password', '-h', connection.host, '-p', connection.port.toString(), '-U', connection.username, '-d', database, ...cmd.split(' ').slice(1)];
+    }
+    
+    const { spawn } = require('child_process');
+    return new Promise((resolve) => {
+      let stdout = '';
+      let stderr = '';
+      
+      const child = spawn(binary, args, { env: { PGPASSWORD: connection.password } });
+      
+      child.stdout.on('data', (data) => stdout += data);
+      child.stderr.on('data', (data) => stderr += data);
+      
+      child.on('close', (code) => resolve({ code, stdout, stderr, cmd }));
+      child.on('error', (err) => resolve({ error: err.message, cmd }));
+    });
   });
 }
 
@@ -125,7 +154,9 @@ async function getConnectionById(id) {
   const connections = store.get('connections', []);
   const connection = connections.find(c => String(c.id) === String(id));
   
-  if (connection && connection.encrypted_password) {
+  if (!connection) return null;
+  
+  if (connection.encrypted_password) {
     try {
       const crypto = require('crypto');
       const ENCRYPTION_KEY = crypto.scryptSync('postgres-manager-secret-v1', 'salt-pg-mgr', 32);
@@ -136,7 +167,7 @@ async function getConnectionById(id) {
       decrypted += decipher.final('utf8');
       connection.password = decrypted;
     } catch (err) {
-      console.error('Failed to decrypt password during query execution', err.message);
+      console.error('Failed to decrypt password:', err.message);
       connection.password = '';
     }
   }

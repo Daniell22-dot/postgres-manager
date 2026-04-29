@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, session } = require('electron');
+const fs = require('fs').promises;
 const path = require('path');
 const Store = require('electron-store');
 const { initDatabase } = require('./ipc-handlers/connections');
@@ -12,6 +13,21 @@ Store.initRenderer();
 let mainWindow;
 const isDev = !app.isPackaged;
 
+function getAppIconPath() {
+  const iconName = 'Postgres Manager Logo with Elephant Icon.png';
+  let iconPath;
+  if (app.isPackaged) {
+    iconPath = path.join(app.getAppPath(), 'resources', iconName);
+  } else {
+    iconPath = path.join(__dirname, '../../resources', iconName);
+  }
+  console.log('App icon path:', iconPath);
+  fs.access(iconPath).catch((err) => {
+    console.warn(`App icon missing: ${iconPath}`, err.message);
+  });
+  return iconPath;
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -24,9 +40,9 @@ function createWindow() {
       contextIsolation: true,
       webSecurity: !isDev,
     },
-    icon: path.join(__dirname, '../../resources/Postgres Manager Logo with Elephant Icon.png'),
-    titleBarStyle: 'hiddenInset', // Modern look on Mac
-    show: false, // Show after ready
+    icon: getAppIconPath(),
+    titleBarStyle: 'hiddenInset',
+    show: false,
   });
 
   if (isDev) {
@@ -46,20 +62,19 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  // Initialize local SQLite database for storing connections/history
   await initDatabase();
-  
-  // Setup IPC handlers
   setupConnectionHandlers(ipcMain);
   setupQueryHandlers(ipcMain);
   setupMetadataHandlers(ipcMain);
-  
   createWindow();
   
-  // Clear connection pools on app quit
   app.on('will-quit', async () => {
-    const { cleanupAllPools } = require('./ipc-handlers/connection-manager');
-    await cleanupAllPools();
+    try {
+      const { cleanupAllPools } = require('./ipc-handlers/connection-manager');
+      await cleanupAllPools();
+    } catch (e) {
+      console.log('Cleanup pools failed (OK if no pools):', e.message);
+    }
   });
 });
 
@@ -75,5 +90,4 @@ app.on('activate', () => {
   }
 });
 
-// Disable GPU acceleration if issues arise
 app.disableHardwareAcceleration();

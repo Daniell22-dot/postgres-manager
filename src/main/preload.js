@@ -29,6 +29,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // History
   getQueryHistory: (connectionId, limit) => ipcRenderer.invoke('db:getQueryHistory', connectionId, limit),
   
-  // Utilities
+// Utilities
   exportToCSV: (data, filename) => ipcRenderer.invoke('db:exportToCSV', data, filename),
+  
+  // PG Shell Commands
+  pgCommand: (connectionId, database, cmd) => ipcRenderer.invoke('db:pgCommand', connectionId, database, cmd),
 });

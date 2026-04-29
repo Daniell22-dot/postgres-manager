@@ -41,3 +41,6 @@ resources/
 release/
 release.rar
 *.rar
+tests/
+^&/
+

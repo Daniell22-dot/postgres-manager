@@ -42,37 +42,37 @@ const TreeNode = ({
     switch (type) {
       case 'connection':
         return [
-          { label: '🔌 Expand / Connect', action: () => { onToggle?.(); closeMenu(); } },
-          { label: '🔄 Refresh', action: () => { onRefresh?.(); closeMenu(); } },
-          { label: '🚀 Start REST API', action: () => { onStartApi?.(); closeMenu(); } },
-          { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
-          { label: '🗑 Delete Connection', action: () => { onDelete?.(); closeMenu(); }, danger: true },
+          { label: 'Expand / Connect', action: () => { onToggle?.(); closeMenu(); } },
+          { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
+          { label: 'Start REST API', action: () => { onStartApi?.(); closeMenu(); } },
+          { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+          { label: 'Delete Connection', action: () => { onDelete?.(); closeMenu(); }, danger: true },
         ];
       case 'database':
         return [
-          { label: '✅ Select Database', action: () => { onSelect?.(); closeMenu(); } },
-          { label: '📂 Expand Schemas', action: () => { onToggle?.(); closeMenu(); } },
-          { label: '🔄 Refresh', action: () => { onRefresh?.(); closeMenu(); } },
-          { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+          { label: 'Select Database', action: () => { onSelect?.(); closeMenu(); } },
+          { label: 'Expand Schemas', action: () => { onToggle?.(); closeMenu(); } },
+          { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
+          { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
         ];
       case 'schema':
         return [
-          { label: '📂 Expand Tables', action: () => { onToggle?.(); closeMenu(); } },
-          { label: '🔄 Refresh', action: () => { onRefresh?.(); closeMenu(); } },
-          { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+          { label: 'Expand Tables', action: () => { onToggle?.(); closeMenu(); } },
+          { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
+          { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
         ];
       case 'table':
         return [
-          { label: '📊 View first 50 rows', action: () => { onViewData?.(50); closeMenu(); } },
-          { label: '📊 View first 100 rows', action: () => { onViewData?.(100); closeMenu(); } },
-          { label: '📊 View all rows', action: () => { onViewData?.(null); closeMenu(); } },
-          { label: '📂 View Columns', action: () => { onToggle?.(); closeMenu(); } },
-          { label: '🔄 Refresh', action: () => { onRefresh?.(); closeMenu(); } },
-          { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+          { label: 'View first 50 rows', action: () => { onViewData?.(50); closeMenu(); } },
+          { label: 'View first 100 rows', action: () => { onViewData?.(100); closeMenu(); } },
+          { label: 'View all rows', action: () => { onViewData?.(null); closeMenu(); } },
+          { label: 'View Columns', action: () => { onToggle?.(); closeMenu(); } },
+          { label: 'Refresh', action: () => { onRefresh?.(); closeMenu(); } },
+          { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
         ];
       default:
         return [
-          { label: '📋 Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
+          { label: 'Copy Name', action: () => { navigator.clipboard.writeText(label); closeMenu(); } },
         ];
     }
   };
@@ -85,7 +85,7 @@ const TreeNode = ({
       >
         <span className="tree-icon">
           {isLoading ? (
-            <Loader size={14} className="spinner" />
+<Loader data-testid="loader" size={14} className="spinner" />
           ) : (
             isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
           )}
@@ -141,4 +141,4 @@ const TreeNode = ({
   );
 };
 
-export default TreeNode;
+export default TreeNode;

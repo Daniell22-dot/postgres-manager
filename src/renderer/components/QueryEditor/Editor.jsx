@@ -16,6 +16,7 @@ import {
 import ResultsGrid from './ResultsGrid';
 import QueryTabs from './QueryTabs';
 import QueryHistory from './QueryHistory';
+import ProfilerPanel from './ProfilerPanel';
 import { useDatabaseConnection } from '../../hooks/useDatabaseConnection';
 import { useQueryStore } from '../../store/queryStore';
 import { useUIStore } from '../../store/uiStore';
@@ -25,6 +26,7 @@ import toast from 'react-hot-toast';
 const Editor = ({ connection, database }) => {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isExecutingPlan, setIsExecutingPlan] = useState(false);
+  const [planData, setPlanData] = useState(null);
   const editorRef = useRef(null);
   
   const { executeQuery, cancelQuery, isExecuting, currentQuery, results, clearResults } = useDatabaseConnection();
@@ -76,7 +78,7 @@ const Editor = ({ connection, database }) => {
     const isDestructive = sqlLower.includes('delete') || sqlLower.includes('drop') || sqlLower.includes('truncate');
     
     if (querySettings.confirmBeforeExecute && isDestructive) {
-      const confirmed = window.confirm('⚠️ This query modifies data. Are you sure?');
+      const confirmed = window.confirm('This query modifies data. Are you sure?');
       if (!confirmed) return;
     }
     
@@ -93,8 +95,12 @@ const Editor = ({ connection, database }) => {
     if (result.success && result.rows[0]) {
       const plan = result.rows[0]['QUERY PLAN'];
       toast.success('Execution plan generated');
-      // You can add a modal to show the plan
-      console.log('Execution Plan:', plan);
+      setPlanData({
+        plan,
+        duration: result.duration,
+        rowCount: result.rowCount,
+        buffers: result.buffers
+      });
     }
     setIsExecutingPlan(false);
   };
@@ -292,7 +298,15 @@ const Editor = ({ connection, database }) => {
           onExport={handleExportResults}
         />
       )}
-      
+      {/* Profiler Panel */}
+      {planData && (
+        <ProfilerPanel 
+          plan={planData.plan}
+          duration={planData.duration}
+          rowCount={planData.rowCount}
+          buffers={planData.buffers}
+        />
+      )}
       {/* History Sidebar */}
       {isHistoryOpen && (
         <QueryHistory 

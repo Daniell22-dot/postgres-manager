@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 const TeamSettings = () => {
   const handleAction = (action) => {
     toast.info(`${action} will be available in the Cloud Sync update!`, {
-      icon: '☁️'
+      icon: null
     });
   };
 

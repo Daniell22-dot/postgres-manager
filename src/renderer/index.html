@@ -4,11 +4,37 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' data: https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com http://localhost:* ws://localhost:*; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://mt1.google.com https://cdnjs.cloudflare.com;" />
-    <link rel="icon" type="image/png" href="../../resources/Postgres Manager Logo with Elephant Icon.png" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Postgres Manager</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="splash" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s;">
+<img src="/splash-logo.png" alt="Loading" style="max-width: 200px; max-height: 200px; width: auto; height: auto; object-fit: contain; opacity: 0; animation: fadeInLogo 1s ease-in-out 0.5s forwards;" />
+      <div style="margin-top: 20px; color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 18px; opacity: 0; animation: fadeIn 1s ease-in-out 1s forwards;">Loading Postgres Manager...</div>
+      <style>
+        @keyframes fadeInLogo { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      </style>
+      <script>
+        window.addEventListener('DOMContentLoaded', () => {
+          const root = document.getElementById('root');
+          const splash = document.getElementById('splash');
+          if (root && splash) {
+            root.style.opacity = '0';
+            const observer = new MutationObserver((mutations) => {
+              if (root.children.length > 0) {
+                splash.style.opacity = '0';
+                setTimeout(() => splash.remove(), 500);
+                root.style.opacity = '1';
+                observer.disconnect();
+              }
+            });
+            observer.observe(root, { childList: true, subtree: true });
+          }
+        });
+      </script>
+    </div>
+    <div id="root" style="opacity: 1; transition: opacity 0.5s;"></div>
     <script type="module" src="./index.jsx"></script>
   </body>
 </html>
