@@ -71,22 +71,26 @@ app.whenReady().then(async () => {
   setupPostgresHandlers(ipcMain);
   setupMysqlHandlers(ipcMain);
 
-  // Initialize bundled database servers
+  // Initialize and start bundled database servers
   try {
     console.log('Initializing bundled database servers...');
 
-    // Try to initialize PostgreSQL
+    // Try to initialize and start PostgreSQL
     try {
       await initPostgresData();
-      console.log('✓ PostgreSQL initialized');
+      const { startPostgresServer } = require('./ipc-handlers/postgres-server');
+      const pgResult = await startPostgresServer();
+      console.log('✓ PostgreSQL initialized and started:', pgResult.message || '');
     } catch (err) {
       console.warn('PostgreSQL initialization skipped:', err.message);
     }
 
-    // Try to initialize MySQL
+    // Try to initialize and start MySQL
     try {
       await initMysqlData();
-      console.log('✓ MySQL initialized');
+      const { startMysqlServer } = require('./ipc-handlers/mysql-server');
+      const mysqlResult = await startMysqlServer();
+      console.log('✓ MySQL initialized and started:', mysqlResult.message || '');
     } catch (err) {
       console.warn('MySQL initialization skipped:', err.message);
     }
