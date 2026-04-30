@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // API Gateway
   startApi: (connectionId) => ipcRenderer.invoke('db:startApi', connectionId),
   stopApi: (connectionId) => ipcRenderer.invoke('db:stopApi', connectionId),
+  getApiInfo: (connectionId) => ipcRenderer.invoke('db:getApiInfo', connectionId),
 
   // Local Servers
   getServerStatus: (type) => ipcRenderer.invoke(`${type}:status`),

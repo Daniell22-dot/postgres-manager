@@ -251,6 +251,10 @@ function setupConnectionHandlers(ipcMain) {
     }
   });
 
+  ipcMain.handle('db:getApiInfo', async (event, connectionId) => {
+    return apiGateway.getInfo(connectionId);
+  });
+
 // Add this to setupConnectionHandlers function
 ipcMain.handle('db:createDatabase', async (event, connectionId, databaseName, owner, encoding) => {
   const connection = await getConnectionById(connectionId);

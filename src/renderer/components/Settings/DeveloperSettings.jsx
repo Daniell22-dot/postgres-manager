@@ -17,7 +17,7 @@ const DeveloperSettings = () => {
       }
       
       try {
-        const info = await window.electron.ipcRenderer.invoke('db:getApiInfo', activeConnection.id);
+        const info = await window.electronAPI.getApiInfo(activeConnection.id);
         setApiInfo(info);
       } catch (err) {
         console.error('Failed to fetch API info:', err);
@@ -80,7 +80,7 @@ const DeveloperSettings = () => {
               onClick={async () => {
                 setLoading(true);
                 try {
-                  const info = await window.electron.ipcRenderer.invoke('db:startApi', activeConnection.id);
+                  const info = await window.electronAPI.startApi(activeConnection.id);
                   setApiInfo(info);
                   toast.success('API Gateway started successfully');
                 } catch (err) {
@@ -193,7 +193,7 @@ print(response.json())`}
                 <button 
                   className="text-xs text-red-500 hover:text-red-400 transition-colors flex items-center gap-1.5"
                   onClick={async () => {
-                    await window.electron.ipcRenderer.invoke('db:stopApi', activeConnection.id);
+                    await window.electronAPI.stopApi(activeConnection.id);
                     setApiInfo(null);
                     toast('API Gateway stopped');
                   }}
