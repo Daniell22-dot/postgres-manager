@@ -23,7 +23,7 @@ Database Manager is a professional, high-performance desktop application designe
 
 The application is built on **Electron**, following a secure and decoupled architecture that separates the UI (Renderer) from the system-level logic (Main).
 
-### 1. Main Process (The "Engine")
+### 1. Main Process
 
 Located in `/src/main`, this process handles all heavy lifting and system interactions:
 
@@ -32,7 +32,7 @@ Located in `/src/main`, this process handles all heavy lifting and system intera
 - **Security & Encryption**: Credentials are secured using deterministic hardware-linked encryption, ensuring that passwords are never stored in plain text.
 - **PostgREST Gateway**: Dynamically spawns API instances for specific connections, allowing developers to instantly turn their database into a RESTful API.
 
-### 2. Renderer Process (The "Cockpit")
+### 2. Renderer Process
 
 Located in `/src/renderer`, this is a modern **React 18** application:
 
@@ -96,7 +96,7 @@ The app functions as more than just a client; it's a manager.
 ### Prerequisites
 
 - **Node.js** (v18 or higher)
-- **npm** (v10 or higher)
+- Must have Postgres Server Running on your local machine(For now).
 
 ### Installation
 
