@@ -19,27 +19,66 @@ function setupQueryHandlers(ipcMain) {
     const dbConfig = { ...connection, database };
     const poolKey = `${connectionId}-${database}`;
     
-    let client;
     try {
       const pool = await manager.getPool(poolKey, dbConfig);
-      client = await pool.connect();
-      
-      // Execute query
-      const result = await client.query(sql, params);
-      
-      const duration = Date.now() - startTime;
-      
-      // Save to history
-      await saveQueryHistory(connectionId, sql, duration, result.rowCount);
-      
-      return {
-        success: true,
-        rows: result.rows,
-        rowCount: result.rowCount,
-        fields: result.fields,
-        duration,
-        command: result.command
-      };
+
+      if (pool.__type === 'mysql') {
+        // MySQL query execution
+        const [rows, fields] = await pool.execute(sql);
+
+        const duration = Date.now() - startTime;
+
+        // For SELECT-like queries, rows is an array of results
+        // For INSERT/UPDATE/DELETE, rows is a ResultSetHeader
+        const isResultSet = Array.isArray(rows);
+
+        await saveQueryHistory(connectionId, sql, duration, isResultSet ? rows.length : (rows.affectedRows || 0));
+
+        if (isResultSet) {
+          return {
+            success: true,
+            rows: rows,
+            rowCount: rows.length,
+            fields: fields ? fields.map(f => ({
+              name: f.name,
+              dataTypeID: f.columnType,
+              tableID: f.table,
+            })) : [],
+            duration,
+            command: sql.trim().split(/\s+/)[0].toUpperCase()
+          };
+        } else {
+          return {
+            success: true,
+            rows: [],
+            rowCount: rows.affectedRows || 0,
+            fields: [],
+            duration,
+            command: sql.trim().split(/\s+/)[0].toUpperCase()
+          };
+        }
+      }
+
+      // PostgreSQL query execution
+      let client;
+      try {
+        client = await pool.connect();
+        const result = await client.query(sql, params);
+
+        const duration = Date.now() - startTime;
+        await saveQueryHistory(connectionId, sql, duration, result.rowCount);
+
+        return {
+          success: true,
+          rows: result.rows,
+          rowCount: result.rowCount,
+          fields: result.fields,
+          duration,
+          command: result.command
+        };
+      } finally {
+        if (client) client.release();
+      }
     } catch (error) {
       const duration = Date.now() - startTime;
       await saveQueryHistory(connectionId, sql, duration, 0, error.message);
@@ -49,8 +88,6 @@ function setupQueryHandlers(ipcMain) {
         error: error.message,
         duration
       };
-    } finally {
-      if (client) client.release();
     }
   });
 
@@ -97,23 +134,39 @@ function setupQueryHandlers(ipcMain) {
       csvRows.push(values.join(','));
     }
     
-    fs.writeFileSync(filePath, csvRows.join('\\n'));
+    fs.writeFileSync(filePath, csvRows.join('\n'));
     return { success: true, filePath };
   });
 
-  // PG Shell Commands
+  // Database Shell Commands
   ipcMain.handle('db:pgCommand', async (event, connectionId, database, cmd) => {
     const connection = await getConnectionById(connectionId);
     if (!connection) throw new Error('Connection not found');
 
-    let binary = 'psql';
-    let args = ['-c', cmd];
-    if (cmd.startsWith('pg_dump')) {
-      binary = 'pg_dump';
-      args = ['--no-password', '-h', connection.host, '-p', connection.port.toString(), '-U', connection.username, '-d', database, ...cmd.split(' ').slice(1)];
-    } else if (cmd.startsWith('pg_restore')) {
-      binary = 'pg_restore';
-      args = ['--no-password', '-h', connection.host, '-p', connection.port.toString(), '-U', connection.username, '-d', database, ...cmd.split(' ').slice(1)];
+    const connType = connection.type || 'postgres';
+    let binary, args, env;
+
+    if (connType === 'mysql') {
+      binary = 'mysql';
+      args = [
+        '-h', connection.host,
+        '-P', connection.port.toString(),
+        '-u', connection.username,
+        '-D', database,
+        '-e', cmd
+      ];
+      env = connection.password ? { MYSQL_PWD: connection.password } : {};
+    } else {
+      binary = 'psql';
+      args = ['-c', cmd];
+      if (cmd.startsWith('pg_dump')) {
+        binary = 'pg_dump';
+        args = ['--no-password', '-h', connection.host, '-p', connection.port.toString(), '-U', connection.username, '-d', database, ...cmd.split(' ').slice(1)];
+      } else if (cmd.startsWith('pg_restore')) {
+        binary = 'pg_restore';
+        args = ['--no-password', '-h', connection.host, '-p', connection.port.toString(), '-U', connection.username, '-d', database, ...cmd.split(' ').slice(1)];
+      }
+      env = { PGPASSWORD: connection.password };
     }
     
     const { spawn } = require('child_process');
@@ -121,7 +174,7 @@ function setupQueryHandlers(ipcMain) {
       let stdout = '';
       let stderr = '';
       
-      const child = spawn(binary, args, { env: { PGPASSWORD: connection.password } });
+      const child = spawn(binary, args, { env });
       
       child.stdout.on('data', (data) => stdout += data);
       child.stderr.on('data', (data) => stderr += data);
@@ -151,6 +204,34 @@ async function saveQueryHistory(connectionId, sql, duration, rowCount, error = n
 }
 
 async function getConnectionById(id) {
+  // Handle bundled local servers
+  if (id === 'local-postgres') {
+    return {
+      id: 'local-postgres',
+      name: 'PostgreSQL (Local)',
+      host: 'localhost',
+      port: 5432,
+      database: 'postgres',
+      username: 'postgres',
+      password: '',
+      type: 'postgres',
+      isLocal: true,
+    };
+  }
+  if (id === 'local-mysql') {
+    return {
+      id: 'local-mysql',
+      name: 'MySQL (Local)',
+      host: 'localhost',
+      port: 3306,
+      database: 'mysql',
+      username: 'root',
+      password: '',
+      type: 'mysql',
+      isLocal: true,
+    };
+  }
+
   const connections = store.get('connections', []);
   const connection = connections.find(c => String(c.id) === String(id));
   

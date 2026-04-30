@@ -8,15 +8,20 @@ function setupMetadataHandlers(ipcMain) {
     
     try {
       const pool = await manager.getPool(connectionId, connection);
-      const client = await pool.connect();
+
+      if (pool.__type === 'mysql') {
+        const [rows] = await pool.execute('SHOW DATABASES');
+        return rows.map(r => ({ name: r.Database }));
+      }
       
+      // PostgreSQL
+      const client = await pool.connect();
       const result = await client.query(`
         SELECT datname as name 
         FROM pg_database 
         WHERE datistemplate = false 
         ORDER BY datname
       `);
-      
       client.release();
       return result.rows;
     } catch (error) {
@@ -25,7 +30,7 @@ function setupMetadataHandlers(ipcMain) {
     }
   });
   
-  // Get schemas - THIS IS KEY FOR SHOWING PUBLIC SCHEMA
+  // Get schemas
   ipcMain.handle('db:getSchemas', async (event, connectionId, database) => {
     const connection = await getConnectionById(connectionId);
     if (!connection) return [];
@@ -35,9 +40,14 @@ function setupMetadataHandlers(ipcMain) {
     
     try {
       const pool = await manager.getPool(poolKey, dbConfig);
+
+      if (pool.__type === 'mysql') {
+        // MySQL doesn't have schemas like PG; return the database itself as a "schema"
+        return [{ name: database, owner: connection.username }];
+      }
+
+      // PostgreSQL
       const client = await pool.connect();
-      
-      // Get all non-system schemas (including public)
       const result = await client.query(`
         SELECT 
           schema_name as name,
@@ -49,7 +59,6 @@ function setupMetadataHandlers(ipcMain) {
           CASE WHEN schema_name = 'public' THEN 0 ELSE 1 END,
           schema_name
       `);
-      
       client.release();
       return result.rows;
     } catch (error) {
@@ -68,8 +77,23 @@ function setupMetadataHandlers(ipcMain) {
     
     try {
       const pool = await manager.getPool(poolKey, dbConfig);
+
+      if (pool.__type === 'mysql') {
+        const [rows] = await pool.execute(
+          `SELECT 
+            TABLE_NAME as name,
+            TABLE_COMMENT as comment,
+            TABLE_ROWS as estimated_rows
+          FROM information_schema.TABLES
+          WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE'
+          ORDER BY TABLE_NAME`,
+          [database]
+        );
+        return rows;
+      }
+
+      // PostgreSQL
       const client = await pool.connect();
-      
       const result = await client.query(`
         SELECT 
           table_name as name,
@@ -80,7 +104,6 @@ function setupMetadataHandlers(ipcMain) {
           AND table_type = 'BASE TABLE'
         ORDER BY table_name
       `, [schema]);
-      
       client.release();
       return result.rows;
     } catch (error) {
@@ -99,8 +122,25 @@ function setupMetadataHandlers(ipcMain) {
     
     try {
       const pool = await manager.getPool(poolKey, dbConfig);
+
+      if (pool.__type === 'mysql') {
+        const [rows] = await pool.execute(
+          `SELECT 
+            COLUMN_NAME as name,
+            DATA_TYPE as type,
+            (IS_NULLABLE = 'YES') as nullable,
+            COLUMN_DEFAULT as default_value,
+            CHARACTER_MAXIMUM_LENGTH as max_length
+          FROM information_schema.COLUMNS
+          WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+          ORDER BY ORDINAL_POSITION`,
+          [database, table]
+        );
+        return rows;
+      }
+
+      // PostgreSQL
       const client = await pool.connect();
-      
       const result = await client.query(`
         SELECT 
           column_name as name,
@@ -112,7 +152,6 @@ function setupMetadataHandlers(ipcMain) {
         WHERE table_schema = $1 AND table_name = $2
         ORDER BY ordinal_position
       `, [schema, table]);
-      
       client.release();
       return result.rows;
     } catch (error) {
@@ -131,8 +170,20 @@ function setupMetadataHandlers(ipcMain) {
     
     try {
       const pool = await manager.getPool(poolKey, dbConfig);
+
+      if (pool.__type === 'mysql') {
+        // MySQL has plugins instead of extensions
+        const [rows] = await pool.execute(
+          `SELECT PLUGIN_NAME as name, PLUGIN_VERSION as version, PLUGIN_STATUS as schema
+           FROM information_schema.PLUGINS
+           WHERE PLUGIN_STATUS = 'ACTIVE'
+           ORDER BY PLUGIN_NAME`
+        );
+        return rows;
+      }
+
+      // PostgreSQL
       const client = await pool.connect();
-      
       const result = await client.query(`
         SELECT 
           extname as name,
@@ -142,7 +193,6 @@ function setupMetadataHandlers(ipcMain) {
         JOIN pg_namespace ON pg_namespace.oid = extnamespace
         ORDER BY extname
       `);
-      
       client.release();
       return result.rows;
     } catch (error) {
@@ -161,8 +211,20 @@ function setupMetadataHandlers(ipcMain) {
     
     try {
       const pool = await manager.getPool(poolKey, dbConfig);
+
+      if (pool.__type === 'mysql') {
+        const [rows] = await pool.execute(
+          `SELECT TABLE_NAME as name, NULL as comment
+           FROM information_schema.VIEWS
+           WHERE TABLE_SCHEMA = ?
+           ORDER BY TABLE_NAME`,
+          [database]
+        );
+        return rows;
+      }
+
+      // PostgreSQL
       const client = await pool.connect();
-      
       const result = await client.query(`
         SELECT 
           table_name as name,
@@ -172,7 +234,6 @@ function setupMetadataHandlers(ipcMain) {
           AND table_type = 'VIEW'
         ORDER BY table_name
       `, [schema]);
-      
       client.release();
       return result.rows;
     } catch (error) {
@@ -191,8 +252,20 @@ function setupMetadataHandlers(ipcMain) {
     
     try {
       const pool = await manager.getPool(poolKey, dbConfig);
+
+      if (pool.__type === 'mysql') {
+        const [rows] = await pool.execute(
+          `SELECT ROUTINE_NAME as name, DTD_IDENTIFIER as return_type, ROUTINE_COMMENT as comment
+           FROM information_schema.ROUTINES
+           WHERE ROUTINE_SCHEMA = ? AND ROUTINE_TYPE = 'FUNCTION'
+           ORDER BY ROUTINE_NAME`,
+          [database]
+        );
+        return rows;
+      }
+
+      // PostgreSQL
       const client = await pool.connect();
-      
       const result = await client.query(`
         SELECT 
           p.proname as name,
@@ -205,7 +278,6 @@ function setupMetadataHandlers(ipcMain) {
           AND NOT p.privisagg
         ORDER BY p.proname
       `, [schema]);
-      
       client.release();
       return result.rows;
     } catch (error) {
@@ -224,8 +296,28 @@ function setupMetadataHandlers(ipcMain) {
     
     try {
       const pool = await manager.getPool(poolKey, dbConfig);
+
+      if (pool.__type === 'mysql') {
+        // MySQL uses AUTO_INCREMENT instead of sequences
+        const [rows] = await pool.execute(
+          `SELECT 
+            TABLE_NAME as name,
+            COLUMN_NAME as data_type,
+            NULL as start_value,
+            NULL as minimum_value,
+            NULL as maximum_value,
+            NULL as increment,
+            NULL as cycle_option
+          FROM information_schema.COLUMNS
+          WHERE TABLE_SCHEMA = ? AND EXTRA LIKE '%auto_increment%'
+          ORDER BY TABLE_NAME`,
+          [database]
+        );
+        return rows;
+      }
+
+      // PostgreSQL
       const client = await pool.connect();
-      
       const result = await client.query(`
         SELECT 
           sequence_name as name,
@@ -239,7 +331,6 @@ function setupMetadataHandlers(ipcMain) {
         WHERE sequence_schema = $1
         ORDER BY sequence_name
       `, [schema]);
-      
       client.release();
       return result.rows;
     } catch (error) {
@@ -258,8 +349,20 @@ function setupMetadataHandlers(ipcMain) {
     
     try {
       const pool = await manager.getPool(poolKey, dbConfig);
+
+      if (pool.__type === 'mysql') {
+        const [rows] = await pool.execute(
+          `SELECT ROUTINE_NAME as name, ROUTINE_COMMENT as comment
+           FROM information_schema.ROUTINES
+           WHERE ROUTINE_SCHEMA = ? AND ROUTINE_TYPE = 'PROCEDURE'
+           ORDER BY ROUTINE_NAME`,
+          [database]
+        );
+        return rows;
+      }
+
+      // PostgreSQL
       const client = await pool.connect();
-      
       const result = await client.query(`
         SELECT 
           p.proname as name,
@@ -270,7 +373,6 @@ function setupMetadataHandlers(ipcMain) {
           AND p.prokind = 'p'
         ORDER BY p.proname
       `, [schema]);
-      
       client.release();
       return result.rows;
     } catch (error) {
@@ -281,6 +383,34 @@ function setupMetadataHandlers(ipcMain) {
 }
 
 async function getConnectionById(id) {
+  // Handle bundled local servers
+  if (id === 'local-postgres') {
+    return {
+      id: 'local-postgres',
+      name: 'PostgreSQL (Local)',
+      host: 'localhost',
+      port: 5432,
+      database: 'postgres',
+      username: 'postgres',
+      password: '',
+      type: 'postgres',
+      isLocal: true,
+    };
+  }
+  if (id === 'local-mysql') {
+    return {
+      id: 'local-mysql',
+      name: 'MySQL (Local)',
+      host: 'localhost',
+      port: 3306,
+      database: 'mysql',
+      username: 'root',
+      password: '',
+      type: 'mysql',
+      isLocal: true,
+    };
+  }
+
   const Store = require('electron-store');
   const crypto = require('crypto');
   const store = new Store({ name: 'postgres-manager-data' });
