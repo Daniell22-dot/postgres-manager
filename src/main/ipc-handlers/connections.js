@@ -203,7 +203,7 @@ function setupConnectionHandlers(ipcMain) {
           port: config.port,
           database: config.database || 'postgres',
           user: config.username,
-          password: config.password,
+          password: config.password || undefined,
           connectionTimeoutMillis: 8000,
           max: 1,
         });
@@ -283,7 +283,7 @@ ipcMain.handle('db:createDatabase', async (event, connectionId, databaseName, ow
       port: connection.port,
       database: 'postgres', // Connect to default database
       user: connection.username,
-      password: connection.password,
+      password: connection.password || undefined,
       connectionTimeoutMillis: 10000,
     });
     

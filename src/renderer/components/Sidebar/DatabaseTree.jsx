@@ -150,8 +150,14 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
     }
   };
 
-  const handleTestStatus = (connectionId) => {
-    testConnectionStatus(connectionId);
+  const handleTestStatus = async (connectionId) => {
+    const { status, result } = await testConnectionStatus(connectionId);
+    if (status === 'fine') {
+      const versionInfo = result?.version || result?.serverVersion || result?.message || 'Up and running';
+      alert(`Server is up and running!\n\n${versionInfo}`);
+    } else {
+      alert(`Connection failed.\n\nError: ${result?.error || 'Unknown error'}`);
+    }
   };
 
   // Simplified createGroupNode without schemas-group etc for direct structure

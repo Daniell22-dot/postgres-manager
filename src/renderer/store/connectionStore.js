@@ -82,20 +82,18 @@ export const useConnectionStore = create(
         
         try {
           let result;
-          if (connection.isLocal && connection.type === 'postgres') {
-            result = await window.electronAPI.invoke('postgres:status');
-          } else if (connection.isLocal && connection.type === 'mysql') {
-            result = await window.electronAPI.invoke('mysql:status');
+          if (connection.isLocal) {
+            result = await window.electronAPI.getServerStatus(connection.type);
           } else {
             result = await window.electronAPI.testConnection(connection);
           }
           
           const status = result.success !== false && result.running !== false ? 'fine' : 'error';
           get().updateStatus(id, status);
-          return status;
+          return { status, result };
         } catch (e) {
           get().updateStatus(id, 'error');
-          return 'error';
+          return { status: 'error', result: { error: e.message } };
         }
       },
       
