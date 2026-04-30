@@ -203,17 +203,25 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
               </div>
             </div>
           );
-        case 'schema':
+        case 'schemas-group':
           icon = <FolderOpen size={14} />;
           childContext.schema = item.name;
           return renderSchemaNode(parentId, item.name, childContext);
         case 'tables-group':
-        case 'table':
           icon = <Table size={14} />;
           childContext.name = item.name;
           childContext.estimatedRows = item.estimated_rows;
-          nextChildType = 'column';
+          nextChildType = 'table';
           break;
+        case 'table':
+          icon = <Key size={12} />;
+          return (
+            <div key={nodeId} className="tree-node-leaf">
+              <div className="tree-node-content" style={{ paddingLeft: '40px' }}>
+                {icon} <span className="tree-label">{item.name} <span style={{opacity: 0.5, fontSize: '10px'}}>({item.type})</span></span>
+              </div>
+            </div>
+          );
         // Similar for views, functions etc. (shortened for brevity)
         default:
           icon = null;
