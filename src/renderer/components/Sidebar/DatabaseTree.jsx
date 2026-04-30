@@ -190,6 +190,7 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
     return data.map((item, index) => {
       const nodeId = `${parentId}-${item.name || index}`;
       let icon, childContext = { ...context }, nextChildType = null;
+      let nodeType = childType;
 
       switch (childType) {
         case 'connection':
@@ -212,6 +213,7 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
           childContext.name = item.name;
           childContext.estimatedRows = item.estimated_rows;
           nextChildType = 'table';
+          nodeType = 'table';
           break;
         case 'table':
           icon = <Key size={12} />;
@@ -233,12 +235,12 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
           id={nodeId}
           label={item.name}
           icon={icon}
-          type={childType}
+          type={nodeType}
           context={childContext}
           isExpanded={expandedNodes.has(nodeId)}
           isLoading={loadingNodes.has(nodeId)}
-          onToggle={() => toggleNode(nodeId, childType, childContext)}
-          onRefresh={() => handleRefresh(nodeId, childType, childContext)}
+          onToggle={() => toggleNode(nodeId, nodeType, childContext)}
+          onRefresh={() => handleRefresh(nodeId, nodeType, childContext)}
           onViewData={(limit) => handleViewData(childContext, limit)}
         >
           {nextChildType && renderChildren(nodeId, nextChildType, childContext)}

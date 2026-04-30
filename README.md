@@ -1,15 +1,15 @@
-# Postgres Manager
+# Database Manager (PostgreSQL & MySQL)
 ![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![NPM](https://img.shields.io/badge/npm-10.x-CB3837?style=for-the-badge&logo=npm&logoColor=white) ![NPX](https://img.shields.io/badge/npx-10.x-000000?style=for-the-badge&logo=npm&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white) ![PostGIS](https://img.shields.io/badge/PostGIS-3.x-4169E1?style=for-the-badge&logo=postgresql&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-3.x-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white) ![PostgREST](https://img.shields.io/badge/PostgREST-12.x-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white) ![MySQL](https://img.shields.io/badge/MySQL-8.x-4479A1?style=for-the-badge&logo=mysql&logoColor=white) ![PostGIS](https://img.shields.io/badge/PostGIS-3.x-4169E1?style=for-the-badge&logo=postgresql&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-3.x-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
 <img width="548" height="202" alt="image" src="https://github.com/user-attachments/assets/998d3046-cc9d-462d-9379-9745aa7779e5" />
 
-Fast PostgreSQL manager for 20+ databases.
+Fast database manager for PostgreSQL and MySQL with support for 20+ simultaneous connections.
 
 ## Overview
 
-Postgres Manager is a high-performance desktop application built to streamline PostgreSQL database administration. Designed for developers and database administrators, it offers a robust toolset for querying, managing, and visualizing PostgreSQL data, including native support for PostGIS spatial data.
+Database Manager is a high-performance desktop application built to streamline database administration for both PostgreSQL and MySQL. Designed for developers and database administrators, it offers a robust toolset for querying, managing, and visualizing data, including native support for PostGIS spatial data and local server lifecycle management.
 <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/5b7f05df-ab9e-42d5-9734-f806af720e5e" />
 <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/49e08c1c-56c4-49d0-9d1a-10b6008f90cf" />
 <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/c72cd1ce-497a-47d7-ae71-e50d1a112685" />
@@ -19,11 +19,12 @@ Postgres Manager is a high-performance desktop application built to streamline P
 
 ## Key Features
 
+- **Dual Database Support**: Full management capabilities for both PostgreSQL and MySQL connections.
 - **Premium User Interface**: Stunning dark-mode design with customizable themes, accent colors, and typography controls.
-- **PostgREST API Gateway**: Instantly generate a RESTful API for any database connection with automatic JWT security.
+- **PostgREST API Gateway**: Instantly generate a RESTful API for PostgreSQL connections with automatic JWT security.
 - **Security Guard**: Real-time scanning for hardcoded tokens and secrets to keep your credentials safe.
-- **Advanced Query Editor**: Monaco-powered SQL editor with professional autocomplete and syntax highlighting.
-- **Spatial Data Visualization**: Native integration with Leaflet for previewing PostGIS geometry data.
+- **Advanced Query Editor**: Monaco-powered SQL editor with professional autocomplete and syntax highlighting for multiple SQL dialects.
+- **Spatial Data Visualization**: Native integration with Leaflet for previewing PostGIS and spatial data.
   <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/dc126420-1270-4279-a629-a9bfc28bb8c8" />
   <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/4a1003a4-13c3-4e7f-9afe-a8e7182dc369" />
   <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/d29c650c-a22f-4f3f-8ec7-3d1f9453db36" />
@@ -35,7 +36,7 @@ Postgres Manager is a high-performance desktop application built to streamline P
 ## Tech Stack
 
 - **Frontend**: React 18, Vite, Zustand, Lucide React
-- **Backend/Desktop**: Electron, Node.js, pg (node-postgres)
+- **Backend/Desktop**: Electron, Node.js, pg (PostgreSQL), mysql2 (MySQL)
 - **Editor**: Monaco Editor
 - **Mapping**: Leaflet, wkx
 
