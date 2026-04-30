@@ -15,8 +15,9 @@ function getMysqlBinPath() {
     // When app is packaged
     return path.join(process.env.PORTABLE_EXECUTABLE_DIR, '..', 'resources', 'binaries', 'mysql', 'bin');
   } else {
-    // Development
-    return path.join(__dirname, '../../resources/binaries/mysql/bin');
+    // Development: __dirname is src/main/ipc-handlers, go up 3 levels to project root.
+    // Note: no /bin subfolder in dev — all exes are directly in resources/binaries/mysql/
+    return path.join(__dirname, '../../../resources/binaries/mysql');
   }
 }
 

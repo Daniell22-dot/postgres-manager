@@ -15,8 +15,8 @@ function getPgBinPath() {
     // When app is packaged
     return path.join(process.env.PORTABLE_EXECUTABLE_DIR, '..', 'resources', 'binaries', 'postgresql');
   } else {
-    // Development
-    return path.join(__dirname, '../../resources/binaries/postgresql');
+    // Development: __dirname is src/main/ipc-handlers, go up 3 levels to project root
+    return path.join(__dirname, '../../../resources/binaries/postgresql');
   }
 }
 
@@ -48,7 +48,7 @@ async function initPostgresData() {
     const initdbPath = path.join(getPgBinPath(), 'initdb.exe');
 
     return new Promise((resolve, reject) => {
-      const initdb = spawn(initdbPath, ['-D', pgDataDir, '-U', 'postgres', '-w'], {
+      const initdb = spawn(initdbPath, ['-D', pgDataDir, '-U', 'postgres'], {
         stdio: 'pipe'
       });
 
