@@ -113,7 +113,7 @@ function setupConnectionHandlers(ipcMain) {
     
     if (connection.id) {
       // Update existing
-      const index = connections.findIndex(c => c.id === connection.id);
+      const index = connections.findIndex(c => String(c.id) === String(connection.id));
       if (index !== -1) {
         connections[index] = {
           ...connection,
@@ -141,12 +141,12 @@ function setupConnectionHandlers(ipcMain) {
   // Delete connection
   ipcMain.handle('db:deleteConnection', async (event, id) => {
     let connections = store.get('connections', []);
-    connections = connections.filter(c => c.id !== id);
+    connections = connections.filter(c => String(c.id) !== String(id));
     store.set('connections', connections);
     
     // Also delete related history
     const history = store.get('queryHistory', []);
-    const filteredHistory = history.filter(h => h.connection_id !== id);
+    const filteredHistory = history.filter(h => String(h.connection_id) !== String(id));
     store.set('queryHistory', filteredHistory);
     
     // Clean up connection pool

@@ -38,9 +38,15 @@ const ConnectionDialog = ({ onClose, onSave, connection = null }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Don't save pw for local default servers
-    const saveData = formData.host === 'localhost' && formData.username === (formData.type === 'mysql' ? 'root' : 'postgres')
+    let saveData = formData.host === 'localhost' && formData.username === (formData.type === 'mysql' ? 'root' : 'postgres')
       ? { ...formData, password: '' }
       : formData;
+      
+    // Preserve the original connection ID if editing
+    if (connection?.id) {
+      saveData.id = connection.id;
+    }
+    
     await onSave(saveData);
   };
   

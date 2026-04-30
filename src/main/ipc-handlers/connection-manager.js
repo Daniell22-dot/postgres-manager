@@ -47,7 +47,7 @@ class ConnectionManager {
         port: config.port,
         database: config.database,
         user: config.username,
-        password: config.password,
+        password: config.password || undefined,
         max: this.maxConnections,
         idleTimeoutMillis: this.idleTimeout,
         connectionTimeoutMillis: 5000,
