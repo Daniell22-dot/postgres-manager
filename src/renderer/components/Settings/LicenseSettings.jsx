@@ -12,8 +12,8 @@ const LicenseSettings = () => {
         <p className="text-gray-400 text-sm">Postgres Manager End User License Agreement (EULA).</p>
       </div>
 
-      <div className="bg-gray-800/40 border border-gray-700 rounded-xl p-6 mb-8 max-h-[300px] overflow-y-auto">
-        <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap leading-relaxed">
+      <div className="bg-gray-800/40 border border-gray-700 rounded-xl p-6 mb-8 max-h-[300px] overflow-y-auto overflow-x-hidden">
+        <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap leading-relaxed break-words" style={{ maxWidth: '100%', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
 {`POSTGRES MANAGER - END USER LICENSE AGREEMENT (EULA)
 
 1. GRANT OF LICENSE

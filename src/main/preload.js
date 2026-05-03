@@ -14,12 +14,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // API Gateway
   startApi: (connectionId) => ipcRenderer.invoke('db:startApi', connectionId),
   stopApi: (connectionId) => ipcRenderer.invoke('db:stopApi', connectionId),
+  getApiInfo: (connectionId) => ipcRenderer.invoke('db:getApiInfo', connectionId),
+
+  // Local Servers
+  getServerStatus: (type) => ipcRenderer.invoke(`${type}:status`),
 
   // Metadata (lazy loading)
   getDatabases: (connectionId) => ipcRenderer.invoke('db:getDatabases', connectionId),
   getSchemas: (connectionId, database) => ipcRenderer.invoke('db:getSchemas', connectionId, database),
   getTables: (connectionId, database, schema) => ipcRenderer.invoke('db:getTables', connectionId, database, schema),
   getColumns: (connectionId, database, schema, table) => ipcRenderer.invoke('db:getColumns', connectionId, database, schema, table),
+  getExtensions: (connectionId, database) => ipcRenderer.invoke('db:getExtensions', connectionId, database),
+  getViews: (connectionId, database, schema) => ipcRenderer.invoke('db:getViews', connectionId, database, schema),
+  getFunctions: (connectionId, database, schema) => ipcRenderer.invoke('db:getFunctions', connectionId, database, schema),
+  getProcedures: (connectionId, database, schema) => ipcRenderer.invoke('db:getProcedures', connectionId, database, schema),
+  getSequences: (connectionId, database, schema) => ipcRenderer.invoke('db:getSequences', connectionId, database, schema),
   
   // Queries
   executeQuery: (connectionId, database, sql, params) => 

@@ -45,6 +45,36 @@ function decrypt(text) {
 }
 
 async function getConnectionById(id) {
+  if (id === 'local-postgres') {
+    return {
+      id: 'local-postgres',
+      name: 'PostgreSQL (Local)',
+      host: 'localhost',
+      port: 5432,
+      database: 'postgres',
+      username: 'postgres',
+      password: '',
+      type: 'postgres',
+      isLocal: true,
+      ssl_mode: 'prefer'
+    };
+  }
+  
+  if (id === 'local-mysql') {
+    return {
+      id: 'local-mysql',
+      name: 'MySQL (Local)',
+      host: 'localhost',
+      port: 3306,
+      database: 'mysql',
+      username: 'root',
+      password: '',
+      type: 'mysql',
+      isLocal: true,
+      ssl_mode: 'disable'
+    };
+  }
+
   const connections = store.get('connections', []);
   const connection = connections.find(c => String(c.id) === String(id));
 
@@ -83,7 +113,7 @@ function setupConnectionHandlers(ipcMain) {
     
     if (connection.id) {
       // Update existing
-      const index = connections.findIndex(c => c.id === connection.id);
+      const index = connections.findIndex(c => String(c.id) === String(connection.id));
       if (index !== -1) {
         connections[index] = {
           ...connection,
@@ -111,12 +141,12 @@ function setupConnectionHandlers(ipcMain) {
   // Delete connection
   ipcMain.handle('db:deleteConnection', async (event, id) => {
     let connections = store.get('connections', []);
-    connections = connections.filter(c => c.id !== id);
+    connections = connections.filter(c => String(c.id) !== String(id));
     store.set('connections', connections);
     
     // Also delete related history
     const history = store.get('queryHistory', []);
-    const filteredHistory = history.filter(h => h.connection_id !== id);
+    const filteredHistory = history.filter(h => String(h.connection_id) !== String(id));
     store.set('queryHistory', filteredHistory);
     
     // Clean up connection pool
@@ -127,38 +157,75 @@ function setupConnectionHandlers(ipcMain) {
   
   // Test connection
   ipcMain.handle('db:testConnection', async (event, config) => {
-    const { Pool } = require('pg');
-    let testPool;
-    
-    try {
-      testPool = new Pool({
-        host: config.host,
-        port: config.port,
-        database: config.database || 'postgres',
-        user: config.username,
-        password: config.password,
-        connectionTimeoutMillis: 8000,
-        max: 1,sopus
-      });
-      
-      const client = await testPool.connect();
-      const result = await client.query('SELECT version() as version, NOW() as time');
-      client.release();
-      
-      return {
-        success: true,
-        version: result.rows[0].version,
-        serverTime: result.rows[0].time
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    } finally {
-      // Only call end once — in finally block
-      if (testPool) {
-        try { await testPool.end(); } catch (_) {}
+    const connType = config.type || 'postgres';
+
+    if (connType === 'mysql') {
+      // MySQL test connection
+      const mysql = require('mysql2/promise');
+      let connection;
+
+      try {
+        connection = await mysql.createConnection({
+          host: config.host,
+          port: config.port,
+          database: config.database || 'mysql',
+          user: config.username,
+          password: config.password || '',
+          connectTimeout: 8000,
+        });
+
+        const [rows] = await connection.execute('SELECT VERSION() as version, NOW() as time');
+
+        return {
+          success: true,
+          version: rows[0].version,
+          serverVersion: rows[0].version,
+          serverTime: rows[0].time
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error.message
+        };
+      } finally {
+        if (connection) {
+          try { await connection.end(); } catch (_) {}
+        }
+      }
+    } else {
+      // PostgreSQL test connection
+      const { Pool } = require('pg');
+      let testPool;
+
+      try {
+        testPool = new Pool({
+          host: config.host,
+          port: config.port,
+          database: config.database || 'postgres',
+          user: config.username,
+          password: config.password || undefined,
+          connectionTimeoutMillis: 8000,
+          max: 1,
+        });
+
+        const client = await testPool.connect();
+        const result = await client.query('SELECT version() as version, NOW() as time');
+        client.release();
+
+        return {
+          success: true,
+          version: result.rows[0].version,
+          serverTime: result.rows[0].time
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error.message
+        };
+      } finally {
+        if (testPool) {
+          try { await testPool.end(); } catch (_) {}
+        }
       }
     }
   });
@@ -182,6 +249,10 @@ function setupConnectionHandlers(ipcMain) {
     } catch (e) {
       throw new Error('Failed to stop API: ' + e.message);
     }
+  });
+
+  ipcMain.handle('db:getApiInfo', async (event, connectionId) => {
+    return apiGateway.getInfo(connectionId);
   });
 
 // Add this to setupConnectionHandlers function
@@ -216,7 +287,7 @@ ipcMain.handle('db:createDatabase', async (event, connectionId, databaseName, ow
       port: connection.port,
       database: 'postgres', // Connect to default database
       user: connection.username,
-      password: connection.password,
+      password: connection.password || undefined,
       connectionTimeoutMillis: 10000,
     });
     
