@@ -43,9 +43,11 @@ async function initPostgresData() {
       return true;
     }
 
-    console.log('Initializing PostgreSQL data directory:', pgDataDir);
-
-    const initdbPath = path.join(getPgBinPath(), 'initdb.exe');
+    const binPath = getPgBinPath();
+    let initdbPath = path.join(binPath, 'initdb.exe');
+    if (!(await fs.access(initdbPath).then(() => true).catch(() => false))) {
+      initdbPath = path.join(binPath, 'bin', 'initdb.exe');
+    }
 
     const sharePath = path.join(getPgBinPath(), 'share');
     const env = { 
@@ -106,14 +108,20 @@ async function startPostgresServer() {
     }
 
     pgDataDir = getPgDataDir();
-    const pgCtlPath = path.join(getPgBinPath(), 'pg_ctl.exe');
+    const binPath = getPgBinPath();
+    
+    // Check both root and bin/ subfolder for the executable
+    let pgCtlPath = path.join(binPath, 'pg_ctl.exe');
+    if (!(await fs.access(pgCtlPath).then(() => true).catch(() => false))) {
+      pgCtlPath = path.join(binPath, 'bin', 'pg_ctl.exe');
+    }
 
     console.log('Starting PostgreSQL server...');
     console.log('Binary:', pgCtlPath);
     console.log('Data dir:', pgDataDir);
 
     return new Promise((resolve) => {
-      const sharePath = path.join(getPgBinPath(), 'share');
+      const sharePath = path.join(binPath, 'share');
       const env = { 
         ...process.env, 
         PGSHAREDIR: sharePath,
