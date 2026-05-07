@@ -134,7 +134,21 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
     if (conn) {
       handleSelectDatabase(conn, nodeContext.database);
     }
-    const query = `SELECT * FROM "${nodeContext.schema}"."${nodeContext.name}"${limit ? ` LIMIT ${limit}` : ''};`;
+    
+    // Choose correct quoting based on database type
+    const isMysql = conn?.type === 'mysql';
+    const q = isMysql ? '`' : '"';
+    
+    // MySQL doesn't have "schemas" in the same way (they are just the database name)
+    // and they shouldn't be prefixed if already selecting the database, 
+    // but the tree structure uses schema as the db name for MySQL.
+    let query;
+    if (isMysql) {
+      query = `SELECT * FROM ${q}${nodeContext.database}${q}.${q}${nodeContext.name}${q}${limit ? ` LIMIT ${limit}` : ''};`;
+    } else {
+      query = `SELECT * FROM ${q}${nodeContext.schema}${q}.${q}${nodeContext.name}${q}${limit ? ` LIMIT ${limit}` : ''};`;
+    }
+    
     const state = useQueryStore.getState();
     const currentTab = state.queryTabs.find(tab => tab.id === state.activeTabId);
     if (currentTab) {

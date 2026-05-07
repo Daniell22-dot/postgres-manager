@@ -47,9 +47,21 @@ async function initPostgresData() {
 
     const initdbPath = path.join(getPgBinPath(), 'initdb.exe');
 
+    const sharePath = path.join(getPgBinPath(), 'share');
+    const env = { 
+      ...process.env, 
+      PGSHAREDIR: sharePath,
+      PGLOCALEDIR: path.join(sharePath, 'locale')
+    };
+
     return new Promise((resolve, reject) => {
-      const initdb = spawn(initdbPath, ['-D', pgDataDir, '-U', 'postgres'], {
-        stdio: 'pipe'
+      const initdb = spawn(initdbPath, [
+        '-D', pgDataDir, 
+        '-U', 'postgres',
+        '-L', sharePath
+      ], {
+        stdio: 'pipe',
+        env
       });
 
       let output = '';
@@ -101,12 +113,21 @@ async function startPostgresServer() {
     console.log('Data dir:', pgDataDir);
 
     return new Promise((resolve) => {
+      const sharePath = path.join(getPgBinPath(), 'share');
+      const env = { 
+        ...process.env, 
+        PGSHAREDIR: sharePath,
+        PGLOCALEDIR: path.join(sharePath, 'locale')
+      };
+
       pgServerProcess = spawn(pgCtlPath, [
         'start',
         '-D', pgDataDir,
         '-l', path.join(pgDataDir, 'postgres.log'),
-        '-o', '-p 54321'
-      ]);
+        '-o', `-p 54321 -L "${sharePath.replace(/\\/g, '/')}"`
+      ], {
+        env
+      });
 
       let output = '';
       let errorOutput = '';
