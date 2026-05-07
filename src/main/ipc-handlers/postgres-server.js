@@ -104,7 +104,8 @@ async function startPostgresServer() {
       pgServerProcess = spawn(pgCtlPath, [
         'start',
         '-D', pgDataDir,
-        '-l', path.join(pgDataDir, 'postgres.log')
+        '-l', path.join(pgDataDir, 'postgres.log'),
+        '-o', '-p 54321'
       ]);
 
       let output = '';

@@ -111,17 +111,30 @@ function setupConnectionHandlers(ipcMain) {
     const encryptedPassword = connection.password ? encrypt(connection.password) : '';
     const now = Date.now();
     
+    // Check if we should update an existing connection by ID or by matching details (to prevent duplicates)
+    let index = -1;
     if (connection.id) {
+      index = connections.findIndex(c => String(c.id) === String(connection.id));
+    } else {
+      // Look for a duplicate by host, port, database and username
+      index = connections.findIndex(c => 
+        c.host === connection.host && 
+        c.port === connection.port && 
+        c.database === connection.database &&
+        c.username === connection.username
+      );
+    }
+
+    if (index !== -1) {
       // Update existing
-      const index = connections.findIndex(c => String(c.id) === String(connection.id));
-      if (index !== -1) {
-        connections[index] = {
-          ...connection,
-          encrypted_password: encryptedPassword,
-          updated_at: now
-        };
-        store.set('connections', connections);
-      }
+      connections[index] = {
+        ...connections[index], // Preserve original metadata (like created_at)
+        ...connection,
+        id: connections[index].id, // Ensure we keep the original ID
+        encrypted_password: encryptedPassword,
+        updated_at: now
+      };
+      store.set('connections', connections);
     } else {
       // Insert new
       const newConnection = {
@@ -161,8 +174,16 @@ function setupConnectionHandlers(ipcMain) {
 
     if (connType === 'mysql') {
       // MySQL test connection
-      const mysql = require('mysql2/promise');
+        const mysql = require('mysql2/promise');
       let connection;
+
+      // Map ssl_mode to mysql2 ssl config
+      let ssl = false;
+      if (config.ssl_mode === 'require' || config.ssl_mode === 'prefer') {
+        ssl = { rejectUnauthorized: false };
+      } else if (config.ssl_mode === 'verify-ca' || config.ssl_mode === 'verify-full') {
+        ssl = { rejectUnauthorized: true };
+      }
 
       try {
         connection = await mysql.createConnection({
@@ -172,6 +193,7 @@ function setupConnectionHandlers(ipcMain) {
           user: config.username,
           password: config.password || '',
           connectTimeout: 8000,
+          ssl: ssl
         });
 
         const [rows] = await connection.execute('SELECT VERSION() as version, NOW() as time');
@@ -197,6 +219,14 @@ function setupConnectionHandlers(ipcMain) {
       const { Pool } = require('pg');
       let testPool;
 
+      // Map ssl_mode to pg ssl config
+      let ssl = false;
+      if (config.ssl_mode === 'require' || config.ssl_mode === 'prefer') {
+        ssl = { rejectUnauthorized: false };
+      } else if (config.ssl_mode === 'verify-ca' || config.ssl_mode === 'verify-full') {
+        ssl = { rejectUnauthorized: true };
+      }
+
       try {
         testPool = new Pool({
           host: config.host,
@@ -206,6 +236,7 @@ function setupConnectionHandlers(ipcMain) {
           password: config.password || undefined,
           connectionTimeoutMillis: 8000,
           max: 1,
+          ssl: ssl
         });
 
         const client = await testPool.connect();

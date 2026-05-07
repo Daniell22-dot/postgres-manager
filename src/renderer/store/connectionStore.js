@@ -1,12 +1,12 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 const LOCAL_SERVERS = [
   {
     id: 'local-postgres',
     name: 'PostgreSQL (Local)',
     host: 'localhost',
-    port: 5432,
+    port: 54321,
     database: 'postgres',
     username: 'postgres',
     password: '',
@@ -19,7 +19,7 @@ const LOCAL_SERVERS = [
     id: 'local-mysql',
     name: 'MySQL (Local)',
     host: 'localhost',
-    port: 3306,
+    port: 33061,
     database: 'mysql',
     username: 'root',
     password: '',
@@ -125,23 +125,27 @@ export const useConnectionStore = create(
     }),
     {
       name: 'connection-store',
-      storage: {
-        getItem: (name) => JSON.parse(localStorage.getItem(name) || 'null'),
+      storage: createJSONStorage(() => ({
+        getItem: (name) => localStorage.getItem(name),
         setItem: (name, value) => {
-          // Don't persist passwords for local servers
-          const state = value.state || value;
+          // Custom logic for sanitizing local server passwords before persistence
+          const parsed = JSON.parse(value);
+          const state = parsed.state;
           const sanitized = {
-            ...state,
-            connections: state.connections.map(c => 
-              LOCAL_SERVERS.some(local => local.id === c.id) 
-                ? { ...c, password: '' }
-                : c
-            )
+            ...parsed,
+            state: {
+              ...state,
+              connections: state.connections.map(c => 
+                LOCAL_SERVERS.some(local => local.id === c.id) 
+                  ? { ...c, password: '' }
+                  : c
+              )
+            }
           };
           localStorage.setItem(name, JSON.stringify(sanitized));
         },
         removeItem: (name) => localStorage.removeItem(name),
-      },
+      })),
       partialize: (state) => ({
         ...state,
         connections: state.connections.map(c => ({

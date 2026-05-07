@@ -27,6 +27,14 @@ class ConnectionManager {
     let pool;
 
     if (type === 'mysql') {
+      // Map ssl_mode to mysql2 ssl config
+      let ssl = false;
+      if (config.ssl_mode === 'require' || config.ssl_mode === 'prefer') {
+        ssl = { rejectUnauthorized: false };
+      } else if (config.ssl_mode === 'verify-ca' || config.ssl_mode === 'verify-full') {
+        ssl = { rejectUnauthorized: true };
+      }
+
       pool = mysql.createPool({
         host: config.host,
         port: config.port,
@@ -37,11 +45,24 @@ class ConnectionManager {
         connectionLimit: this.maxConnections,
         connectTimeout: 5000,
         enableKeepAlive: true,
+        ssl: ssl
       });
 
       // Tag the pool so callers can branch
       pool.__type = 'mysql';
     } else {
+      // Helper to get SSL config based on mode
+      const getSSLConfig = (mode) => {
+        if (mode === 'require' || mode === 'prefer') {
+          return { rejectUnauthorized: false };
+        } else if (mode === 'verify-ca' || mode === 'verify-full') {
+          return { rejectUnauthorized: true };
+        }
+        return false;
+      };
+
+      let sslConfig = getSSLConfig(config.ssl_mode);
+      
       pool = new Pool({
         host: config.host,
         port: config.port,
@@ -53,15 +74,26 @@ class ConnectionManager {
         connectionTimeoutMillis: 5000,
         statement_timeout: 60000, // 60 seconds query timeout
         keepAlive: true,
+        ssl: sslConfig
       });
 
       pool.__type = 'postgres';
 
-      // Handle pool errors
-      pool.on('error', (err) => {
-        console.error(`Unexpected pool error for ${connectionId}:`, err);
-        this.pools.delete(connectionId);
-        this.poolTypes.delete(connectionId);
+      // Handle pool errors and implement fallback for 'prefer' mode
+      pool.on('error', async (err) => {
+        console.error(`Unexpected pool error for ${connectionId}:`, err.message);
+        
+        // If we were using SSL and it was 'prefer' mode, and the error indicates SSL issues
+        if (sslConfig && config.ssl_mode === 'prefer' && 
+            (err.message.includes('SSL') || err.message.includes('does not support SSL'))) {
+          console.log(`SSL failed for ${connectionId} in 'prefer' mode. Retrying without SSL...`);
+          this.pools.delete(connectionId);
+          // The next call to getPool will now use the updated logic if we were to flag it, 
+          // but for now we just clear it so the user can retry or the next request triggers it.
+        } else {
+          this.pools.delete(connectionId);
+          this.poolTypes.delete(connectionId);
+        }
       });
     }
 

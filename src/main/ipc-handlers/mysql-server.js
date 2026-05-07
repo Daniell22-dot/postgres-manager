@@ -108,7 +108,7 @@ async function startMysqlServer() {
     return new Promise((resolve) => {
       mysqlServerProcess = spawn(mysqldPath, [
         `--datadir=${mysqlDataDir}`,
-        `--port=3306`,
+        `--port=33061`,
         `--bind-address=127.0.0.1`
       ], {
         stdio: 'pipe'

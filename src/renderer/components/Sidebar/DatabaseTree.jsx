@@ -17,6 +17,7 @@ const DatabaseTree = ({ onSelectDatabase, onSelectTable }) => {
   const { connections, connectionStatuses, ensureLocalServers, testConnectionStatus, updateStatus } = useConnectionStore();
 
   useEffect(() => {
+    loadConnections();
     ensureLocalServers();
     // Test status for local servers
     connections.forEach(conn => {

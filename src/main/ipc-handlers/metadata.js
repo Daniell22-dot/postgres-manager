@@ -389,12 +389,13 @@ async function getConnectionById(id) {
       id: 'local-postgres',
       name: 'PostgreSQL (Local)',
       host: 'localhost',
-      port: 5432,
+      port: 54321,
       database: 'postgres',
       username: 'postgres',
       password: '',
       type: 'postgres',
       isLocal: true,
+      ssl_mode: 'prefer'
     };
   }
   if (id === 'local-mysql') {
@@ -402,12 +403,13 @@ async function getConnectionById(id) {
       id: 'local-mysql',
       name: 'MySQL (Local)',
       host: 'localhost',
-      port: 3306,
+      port: 33061,
       database: 'mysql',
       username: 'root',
       password: '',
       type: 'mysql',
       isLocal: true,
+      ssl_mode: 'disable'
     };
   }
 
@@ -439,7 +441,8 @@ async function getConnectionById(id) {
 
   return {
     ...connection,
-    password
+    password,
+    ssl_mode: connection.ssl_mode || 'prefer'
   };
 }
 
