@@ -68,7 +68,7 @@ class ConnectionManager {
         port: config.port,
         database: config.database,
         user: config.username,
-        password: config.password || undefined,
+        password: config.password || '',
         max: this.maxConnections,
         idleTimeoutMillis: this.idleTimeout,
         connectionTimeoutMillis: 5000,
@@ -79,21 +79,29 @@ class ConnectionManager {
 
       pool.__type = 'postgres';
 
-      // Handle pool errors and implement fallback for 'prefer' mode
+      // Attach a helper to test the connection and handle fallback
+      pool.testAndConnect = async () => {
+        try {
+          const client = await pool.connect();
+          return client;
+        } catch (err) {
+          // If we were using SSL and it was 'prefer' mode, and the error indicates SSL issues
+          if (sslConfig && config.ssl_mode === 'prefer' && 
+              (err.message.includes('SSL') || err.message.includes('does not support SSL'))) {
+            console.log(`Initial SSL connect failed for ${connectionId}. Retrying without SSL...`);
+            this.pools.delete(connectionId);
+            // Return null or throw a specific error to trigger a retry in the caller
+            throw new Error('SSL_FALLBACK_NEEDED');
+          }
+          throw err;
+        }
+      };
+
+      // Handle subsequent pool errors
       pool.on('error', async (err) => {
         console.error(`Unexpected pool error for ${connectionId}:`, err.message);
-        
-        // If we were using SSL and it was 'prefer' mode, and the error indicates SSL issues
-        if (sslConfig && config.ssl_mode === 'prefer' && 
-            (err.message.includes('SSL') || err.message.includes('does not support SSL'))) {
-          console.log(`SSL failed for ${connectionId} in 'prefer' mode. Retrying without SSL...`);
-          this.pools.delete(connectionId);
-          // The next call to getPool will now use the updated logic if we were to flag it, 
-          // but for now we just clear it so the user can retry or the next request triggers it.
-        } else {
-          this.pools.delete(connectionId);
-          this.poolTypes.delete(connectionId);
-        }
+        this.pools.delete(connectionId);
+        this.poolTypes.delete(connectionId);
       });
     }
 

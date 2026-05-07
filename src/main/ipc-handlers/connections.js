@@ -233,13 +233,36 @@ function setupConnectionHandlers(ipcMain) {
           port: config.port,
           database: config.database || 'postgres',
           user: config.username,
-          password: config.password || undefined,
+          password: config.password || '',
           connectionTimeoutMillis: 8000,
           max: 1,
           ssl: ssl
         });
 
-        const client = await testPool.connect();
+        let client;
+        try {
+          client = await testPool.connect();
+        } catch (err) {
+          if (ssl && config.ssl_mode === 'prefer' && 
+              (err.message.includes('SSL') || err.message.includes('does not support SSL'))) {
+            // Retry without SSL
+            if (testPool) await testPool.end();
+            testPool = new Pool({
+              host: config.host,
+              port: config.port,
+              database: config.database || 'postgres',
+              user: config.username,
+              password: config.password || '',
+              connectionTimeoutMillis: 8000,
+              max: 1,
+              ssl: false
+            });
+            client = await testPool.connect();
+          } else {
+            throw err;
+          }
+        }
+
         const result = await client.query('SELECT version() as version, NOW() as time');
         client.release();
 

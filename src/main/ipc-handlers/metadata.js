@@ -7,7 +7,7 @@ function setupMetadataHandlers(ipcMain) {
     if (!connection) return [];
     
     try {
-      const pool = await manager.getPool(connectionId, connection);
+      let pool = await manager.getPool(connectionId, connection);
 
       if (pool.__type === 'mysql') {
         const [rows] = await pool.execute('SHOW DATABASES');
@@ -15,7 +15,20 @@ function setupMetadataHandlers(ipcMain) {
       }
       
       // PostgreSQL
-      const client = await pool.connect();
+      let client;
+      try {
+        client = await pool.testAndConnect();
+      } catch (err) {
+        if (err.message === 'SSL_FALLBACK_NEEDED') {
+          // Retry without SSL
+          const noSslConfig = { ...connection, ssl_mode: 'disable' };
+          pool = await manager.getPool(connectionId, noSslConfig);
+          client = await pool.connect();
+        } else {
+          throw err;
+        }
+      }
+
       const result = await client.query(`
         SELECT datname as name 
         FROM pg_database 
